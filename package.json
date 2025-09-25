@@ -1,6 +1,7 @@
 {
   "name": "fashion-shop-be",
   "version": "1.0.0",
+  "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,7 +18,7 @@
   "bugs": {
     "url": "https://github.com/nhatthaiuit/fashion-shop-be/issues"
   },
-  "homepage": "https://github.com/nhatthaiuit/fashion-shop-be#readme",
+  "homepage": "https://github.com/nhatthaiuit/fashion-shop-bereadme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
