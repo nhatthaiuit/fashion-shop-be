@@ -1,0 +1,31 @@
+# --- Node & deps
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Env secrets
+.env
+.env.*
+!.env.example        # giữ lại file mẫu để người khác biết cần biến gì
+
+# --- Build artifacts (nếu bạn build ra dist)
+dist/
+build/
+
+# --- Logs
+logs/
+*.log
+*.log.*
+
+# --- Coverage / test outputs
+coverage/
+
+# --- OS junk
+.DS_Store
+Thumbs.db
+
+# --- IDE/editor
+.vscode/
+.idea/

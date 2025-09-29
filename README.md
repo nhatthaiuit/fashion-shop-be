@@ -55,3 +55,8 @@ Backend API cho dự án Fashion Shop (Node.js + Express + MongoDB).
 
     Nạp dữ liệu mẫu:
     POST http://localhost:5000/api/products/seed  → "inserted": 3
+
+## Live URLs
+- Web UI: https://fashion-shop-frontend-peach.vercel.app
+- API base: https://fashion-shop-backend.onrender.com/
+- API Docs (Swagger): https://fashion-shop-backend.onrender.com/docs

@@ -1,51 +1,78 @@
+// src/server.js
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
+
+// Swagger (tạo spec trực tiếp ở đây để /docs chạy public)
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
+
+// Routes
 import productRoutes from "./routes/productRoutes.js";
 
-dotenv.config();
-
 const app = express();
-app.use(cors());
+
+// ---- Middleware cơ bản ----
 app.use(express.json());
 
-// Health
-app.get("/", (req, res) => res.send("Fashion Shop API is running"));
+// CORS: cấu hình bằng biến ENV CORS_ORIGIN="https://your-fe.vercel.app,https://another.com"
+// Dev thì có thể để "*"
+const allowed =
+  process.env.CORS_ORIGIN?.split(",").map((s) => s.trim()) || ["*"];
+app.use(
+  cors({
+    origin: allowed.includes("*") ? true : allowed,
+    credentials: true,
+  })
+);
 
-// Swagger (tùy bạn bật/tắt)
-const swaggerSpec = swaggerJSDoc({
+// ---- Health check ----
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    name: "Fashion Shop API",
+    time: new Date().toISOString(),
+  });
+});
+
+// ---- Swagger /docs ----
+// Không hard-code localhost; khi deploy hãy set PUBLIC_BASE_URL = https://<your-be-domain>
+const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: { title: "Fashion Shop API", version: "1.0.0" },
-    servers: [{ url: `http://localhost:${process.env.PORT || 5000}` }],
+    servers: [{ url: process.env.PUBLIC_BASE_URL || "/" }],
   },
-  apis: [],
-});
+  // Quét comment JSDoc ngay trong các file routes
+  apis: ["./src/routes/*.js"],
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// API routes
+// ---- API routes ----
 app.use("/api/products", productRoutes);
 
-// ---- Connect DB rồi mới start server ----
+// ---- Kết nối DB rồi mới start server ----
 const PORT = process.env.PORT || 5000;
-const uri = process.env.MONGO_URI; // mongodb+srv://...
-if (!uri) {
-  console.error("MONGO_URI is missing in .env");
+const URI = process.env.MONGO_URI;
+
+if (!URI) {
+  console.error("❌ MONGO_URI is missing in environment variables.");
   process.exit(1);
 }
 
 mongoose
-  .connect(uri, { serverSelectionTimeoutMS: 15000 })
+  .connect(URI, { serverSelectionTimeoutMS: 15000 })
   .then(() => {
-    console.log("MongoDB connected");
-    app.listen(PORT, () =>
-      console.log(`Server running on http://localhost:${PORT}`)
-    );
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () => {
+      const base = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
+      console.log(`🚀 API base: ${base}`);
+      console.log(`📘 Swagger: ${base.replace(/\/$/, "")}/docs`);
+    });
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
+    console.error("❌ MongoDB connection error:", err?.message || err);
     process.exit(1);
   });
