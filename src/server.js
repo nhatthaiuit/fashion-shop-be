@@ -15,12 +15,12 @@ app.use(express.json());
 // Health
 app.get("/", (req, res) => res.send("Fashion Shop API is running"));
 
-// Swagger
+// Swagger (tùy bạn bật/tắt)
 const swaggerSpec = swaggerJSDoc({
   definition: {
     openapi: "3.0.0",
     info: { title: "Fashion Shop API", version: "1.0.0" },
-    servers: [{ url: "http://localhost:" + (process.env.PORT || 5000) }],
+    servers: [{ url: `http://localhost:${process.env.PORT || 5000}` }],
   },
   apis: [],
 });
@@ -29,21 +29,23 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // API routes
 app.use("/api/products", productRoutes);
 
-// 👉 Start server TRƯỚC
+// ---- Connect DB rồi mới start server ----
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  // 👉 Rồi mới connect DB (để /docs và / route vẫn sống nếu DB lỗi)
-  const uri = process.env.MONGO_URI;
-  if (!uri) {
-    console.error("MONGO_URI is missing in .env");
-    return;
-  }
-  mongoose
-    .connect(uri, {
-      serverSelectionTimeoutMS: 15000,
-      // tls: true, // thường mặc định đã bật với mongodb+srv
-    })
-    .then(() => console.log("MongoDB connected"))
-    .catch((err) => console.error("MongoDB connection error:", err));
-});
+const uri = process.env.MONGO_URI; // mongodb+srv://...
+if (!uri) {
+  console.error("MONGO_URI is missing in .env");
+  process.exit(1);
+}
+
+mongoose
+  .connect(uri, { serverSelectionTimeoutMS: 15000 })
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(PORT, () =>
+      console.log(`Server running on http://localhost:${PORT}`)
+    );
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });

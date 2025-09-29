@@ -1,21 +1,26 @@
 import express from "express";
 import Product from "../models/Product.js";
+import products from "../data.js";
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const products = await Product.find();
-  res.json(products);
+  try {
+    const list = await Product.find();
+    res.json(list);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
 });
 
 router.post("/seed", async (req, res) => {
-  const sample = [
-    { name: "T-Shirt Basic", price: 149000 },
-    { name: "Jeans Slimfit", price: 399000 },
-    { name: "Hoodie Oversize", price: 499000 }
-  ];
-  const out = await Product.insertMany(sample);
-  res.json({ inserted: out.length });
+  try {
+    await Product.deleteMany({});
+    const inserted = await Product.insertMany(products);
+    res.json({ inserted: inserted.length });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
 });
 
 export default router;
