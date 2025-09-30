@@ -60,3 +60,48 @@ Backend API cho dự án Fashion Shop (Node.js + Express + MongoDB).
 - Web UI: https://fashion-shop-frontend-peach.vercel.app
 - API base: https://fashion-shop-backend.onrender.com/
 - API Docs (Swagger): https://fashion-shop-backend.onrender.com/docs
+
+# Quy trình phát triển dự án như sau:
+
+1. Trên máy local
+
+Sau khi đã thêm/sửa code xong → kiểm tra chạy local:
+
+    npm run dev   # FE
+    npm run dev   # BE
+
+Nếu ok → commit vào repo tương ứng:
+
+    git add .
+    git commit -m "feat(ui): add Navbar, Home, Products, ProductDetail pages"
+    git push origin main
+
+2. Trên GitHub
+
+Vì đã kết nối FE repo với Vercel và BE repo với Render,
+mỗi lần push lên branch đang deploy (thường là main),
+Vercel/Render sẽ tự động build và deploy lại.
+
+Sau 1–2 phút, refresh link Vercel/Render → sẽ thấy thay đổi ngay.
+
+3. Một số lưu ý
+
+FE (Vercel):
+
+    Chạy npm run build thành công thì mới deploy được.
+
+    Nếu đổi branch deploy, nhớ chọn lại trong Settings của Vercel.
+
+BE (Render):
+
+    Khi push code mới, Render sẽ tự động restart service.
+
+    Nếu BE có thay đổi .env, phải vào Dashboard Render → Environment → Update → Deploy lại.
+
+Cache:
+
+    Đôi khi trình duyệt vẫn giữ CSS/JS cũ → bấm Ctrl + Shift + R (hard refresh).
+
+    Nếu vẫn chưa thấy, vào dashboard Vercel/Render xem log build có lỗi không.
+
+👉 Nói ngắn gọn: commit + push → chờ build → refresh link → thấy ngay thay đổi.
