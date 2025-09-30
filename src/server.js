@@ -10,6 +10,10 @@ import swaggerJSDoc from "swagger-jsdoc";
 
 // Routes
 import productRoutes from "./routes/productRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+
+
+
 
 const app = express();
 
@@ -35,7 +39,7 @@ app.get("/", (req, res) => {
     time: new Date().toISOString(),
   });
 });
-
+app.use("/api/auth", authRoutes);
 // ---- Swagger /docs ----
 // Không hard-code localhost; khi deploy hãy set PUBLIC_BASE_URL = https://<your-be-domain>
 const swaggerOptions = {

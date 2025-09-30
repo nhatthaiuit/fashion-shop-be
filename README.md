@@ -105,3 +105,7 @@ Cache:
     Nếu vẫn chưa thấy, vào dashboard Vercel/Render xem log build có lỗi không.
 
 👉 Nói ngắn gọn: commit + push → chờ build → refresh link → thấy ngay thay đổi.
+
+
+
+* JWT_SECRET=chuoi_ngau_nhien_rat_dai_va_phuc_tap

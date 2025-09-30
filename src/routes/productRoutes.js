@@ -2,11 +2,13 @@
 import express from "express";
 import Product from "../models/Product.js";
 import products from "../data.js";
+import { requireAuth } from "../middlewares/auth.js";
+
 
 const router = express.Router();
 
 /**
- * @openapi
+ * @openapi 
  * /api/products:
  *   get:
  *     summary: Get all products
@@ -27,30 +29,66 @@ router.get("/", async (req, res) => {
 
 /**
  * @openapi
- * /api/products/seed:
- *   post:
- *     summary: Seed sample products (dev only)
+ * /api/products/{slug}:
+ *   get:
+ *     summary: Get product by slug
  *     tags:
  *       - Products
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Seeded count
- *       403:
- *         description: Forbidden in production
+ *         description: A product
+ *       404:
+ *         description: Not found
  */
-router.post("/seed", async (req, res) => {
+router.get("/:slug", async (req, res) => {
   try {
-    // 👉 Bật chặn ở production nếu muốn an toàn
-    // if (process.env.NODE_ENV === "production") {
-    //   return res.status(403).json({ message: "Seeding is disabled in production" });
-    // }
-
-    await Product.deleteMany({});
-    const inserted = await Product.insertMany(products);
-    res.json({ inserted: inserted.length });
+    const product = await Product.findOne({ slug: req.params.slug });
+    if (!product) return res.status(404).json({ message: "Not found" });
+    res.json(product);
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
 });
+
+// Create product (chỉ admin)
+router.post("/", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { name } = req.body;
+    const doc = await Product.create({ ...req.body, slug: slugify(name, { lower: true }) });
+    res.status(201).json(doc);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// Update (chỉ admin)
+router.patch("/:id", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const doc = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!doc) return res.status(404).json({ message: "Not found" });
+    res.json(doc);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// Delete (chỉ admin)
+router.delete("/:id", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const deleted = await Product.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Not found" });
+    res.status(204).end();
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+
 
 export default router;
