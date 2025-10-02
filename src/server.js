@@ -11,7 +11,7 @@ import swaggerJSDoc from "swagger-jsdoc";
 // Routes
 import productRoutes from "./routes/productRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 
 
@@ -80,3 +80,19 @@ mongoose
     console.error("❌ MongoDB connection error:", err?.message || err);
     process.exit(1);
   });
+
+
+// 404
+app.use((req,res)=> res.status(404).json({ message:"Not found" }));
+// Error handler
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next)=>{
+  console.error(err);
+  res.status(err.statusCode || 500).json({ message: err.message || "Internal Server Error" });
+});
+
+
+
+// mount route vào server 
+app.use("/api/categories", categoryRoutes);
+

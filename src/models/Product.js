@@ -2,17 +2,23 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
-    name:        { type: String, required: true, trim: true },
-    category:    { type: String, required: true },
-    image:       { type: String, required: true },
-    price:       { type: Number, required: true, min: 0 },
-    brand:       { type: String, required: true },
-    countInStock:{ type: Number, required: true, min: 0, default: 0 },
-    rating:      { type: Number, required: true, min: 0, max: 5, default: 0 },
-    numReviews:  { type: Number, required: true, min: 0, default: 0 },
-    description: { type: String, default: "" },
+    name: { type: String, required: true, trim: true },
+    slug: { type: String, unique: true, index: true },
+    price: { type: Number, required: true, min: 0 },
+    description: String,
+    images: [String],
+    stock: { type: Number, default: 0 },
+    status: { type: String, enum: ["active","hidden"], default: "active" },
+     category:    { type: String, required: true },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Product", productSchema);
+// Index phục vụ lọc: category + price + status + createdAt
+productSchema.index({ category: 1, price: 1, status: 1, createdAt: -1 });
+
+// Index text cho tìm kiếm tên
+productSchema.index({ name: "text" });
+
+const Product = mongoose.model("Product", productSchema);
+export default Product;
