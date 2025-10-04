@@ -14,14 +14,44 @@ const router = express.Router();
  *       - Products
  *     responses:
  *       200:
- *         description: List of products
+ *         description: A list of products
  */
-router.get("/", async (req, res) => {
+router.get("/api/products", async (_req, res) => {
   try {
-    const list = await Product.find();
-    res.json(list);
+    const list = await Product.find({}).lean();
+    return res.json(list);
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/products/{id}:
+ *   get:
+ *     summary: Get product by id
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Mongo ObjectId of a product
+ *     responses:
+ *       200:
+ *         description: The product
+ *       404:
+ *         description: Not found
+ */
+router.get("/api/products/:id", async (req, res) => {
+  try {
+    const prod = await Product.findById(req.params.id).lean();
+    if (!prod) return res.status(404).json({ message: "Not found" });
+    return res.json(prod);
+  } catch (e) {
+    return res.status(404).json({ message: "Not found" });
   }
 });
 
@@ -29,27 +59,20 @@ router.get("/", async (req, res) => {
  * @openapi
  * /api/products/seed:
  *   post:
- *     summary: Seed sample products (dev only)
+ *     summary: Seed demo products
  *     tags:
  *       - Products
  *     responses:
  *       200:
- *         description: Seeded count
- *       403:
- *         description: Forbidden in production
+ *         description: Seed result
  */
-router.post("/seed", async (req, res) => {
+router.post("/api/products/seed", async (_req, res) => {
   try {
-    // 👉 Bật chặn ở production nếu muốn an toàn
-    // if (process.env.NODE_ENV === "production") {
-    //   return res.status(403).json({ message: "Seeding is disabled in production" });
-    // }
-
     await Product.deleteMany({});
     const inserted = await Product.insertMany(products);
-    res.json({ inserted: inserted.length });
+    return res.json({ inserted: inserted.length });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    return res.status(500).json({ message: e.message });
   }
 });
 
