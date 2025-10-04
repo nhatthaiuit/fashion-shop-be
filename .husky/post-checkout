@@ -1,3 +1,38 @@
-. "$(dirname -- "$0")/_/husky.sh"
-echo "🔧 post-checkout: installing deps (BE)..."
-if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# post-checkout (portable, no-fail if npm missing)
+# Husky v10+: không cần source husky.sh
+
+echo "🔧 post-checkout: installing deps..."
+
+# 1) Nếu không có package.json thì bỏ qua
+if [ ! -f "package.json" ]; then
+  echo "ℹ️  No package.json -> skip."
+  exit 0
+fi
+
+# (tùy chọn cho mac Homebrew)
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+# 2) Thử tìm trình quản lý gói (ưu tiên npm, fallback yarn/pnpm)
+PKG=""
+if command -v npm >/dev/null 2>&1; then
+  PKG="npm"
+elif command -v yarn >/dev/null 2>&1; then
+  PKG="yarn"
+elif command -v pnpm >/dev/null 2>&1; then
+  PKG="pnpm"
+fi
+
+# 3) Nếu không tìm thấy, KHÔNG fail (giữ cho GitHub Desktop/mac sạch lỗi)
+if [ -z "$PKG" ]; then
+  echo "ℹ️  No npm/yarn/pnpm in PATH -> skip install (won't fail)."
+  exit 0
+fi
+
+# 4) Cài deps (ci nếu có, fallback install). Tất cả đều im lặng nếu không lockfile tương ứng.
+if [ "$PKG" = "npm" ]; then
+  npm ci >/dev/null 2>&1 || npm install
+elif [ "$PKG" = "yarn" ]; then
+  yarn install --frozen-lockfile >/dev/null 2>&1 || yarn install
+else
+  pnpm install --frozen-lockfile >/dev/null 2>&1 || pnpm install
+fi
