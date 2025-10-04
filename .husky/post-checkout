@@ -1,0 +1,3 @@
+. "$(dirname -- "$0")/_/husky.sh"
+echo "🔧 post-checkout: installing deps (BE)..."
+if [ -f package-lock.json ]; then npm ci; else npm install; fi
