@@ -1,17 +1,12 @@
-// be/src/swagger/swagger.js (ESM)
-import swaggerUi from "swagger-ui-express";
-import swaggerJSDoc from "swagger-jsdoc";
-
-const options = {
+const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
-    info: { title: "Fashion Shop API", version: "1.0.0" },
-    // Không hard-code localhost. Khi deploy, đặt PUBLIC_BASE_URL trong ENV.
+    info: {
+      title: "Fashion Shop API",
+      version: "1.0.0",
+      description: "REST API for Fashion Shop (Products, Auth, Categories)",
+    },
     servers: [{ url: process.env.PUBLIC_BASE_URL || "/" }],
   },
-  // Quét comment JSDoc trong các route
-  apis: ["./src/routes/*.js"],
+  apis: [path.join(__dirname, "routes/*.js")], // ✅ đường dẫn tuyệt đối
 };
-
-export const swaggerSpec = swaggerJSDoc(options);
-export { swaggerUi };

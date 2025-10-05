@@ -13,8 +13,11 @@ import productRoutes from "./routes/productRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 
-
-
+// Lấy đường dẫn tuyệt đối đến thư mục gốc
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import path from "path";
+import { fileURLToPath } from "url";
 const app = express();
 
 // ---- Middleware cơ bản ----
