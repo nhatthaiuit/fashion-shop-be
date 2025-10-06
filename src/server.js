@@ -14,6 +14,8 @@ import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 
 app.use("/api/orders", orderRoutes);
