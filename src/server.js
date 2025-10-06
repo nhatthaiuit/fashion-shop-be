@@ -5,13 +5,19 @@ import cors from "cors";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import authRoutes from "./routes/authRoutes.js";
 import swaggerUi from "swagger-ui-express";
-import swaggerJSDoc from "swagger-jsdoc";
-
+import { swaggerSpec } from "./swagger/swagger.js";
+import { notFound, errorHandler } from "./middleware/errorHandler.js";
+// Routes
 import productRoutes from "./routes/productRoutes.js";
-
+import orderRoutes from "./routes/orderRoutes.js";
 const app = express();
+
+app.use("/api/auth", authRoutes);
+
+app.use("/api/orders", orderRoutes);
+// ---- Middleware cơ bản ----
 app.use(express.json());
 
 // CORS
@@ -24,18 +30,9 @@ app.use(cors({
 // Health
 app.get("/", (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
-// Swagger
-const options = {
-  definition: {
-    openapi: "3.0.0",
-    info: { title: "Fashion Shop API", version: "1.0.0" },
-    servers: [
-      { url: process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 5000}` },
-    ],
-  },
-  apis: ["./src/routes/*.js"],
-};
-const swaggerSpec = swaggerJSDoc(options);
+// ---- Swagger /docs ----
+// Không hard-code localhost; khi deploy hãy set PUBLIC_BASE_URL = https://<your-be-domain>
+
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
@@ -67,3 +64,6 @@ mongoose.connect(MONGO_URI)
     console.error("❌ Mongo connect error:", err?.message || err);
     process.exit(1);
   });
+
+app.use(notFound);
+app.use(errorHandler);
