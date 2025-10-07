@@ -38,7 +38,7 @@ app.get("/", (_req, res) => res.json({ ok: true, time: new Date().toISOString() 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
-app.use(productRoutes);
+app.use('/api/products', productRoutes);
 
 // Static images (optional)
 const __filename = fileURLToPath(import.meta.url);

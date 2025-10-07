@@ -15,4 +15,9 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Gợi ý index để filter/search mượt hơn
+productSchema.index({ name: 'text', brand: 'text', category: 'text' });
+productSchema.index({ category: 1, brand: 1, price: 1, createdAt: -1 });
+
+
 export default mongoose.model("Product", productSchema);
