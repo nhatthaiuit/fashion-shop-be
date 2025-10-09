@@ -2,7 +2,7 @@ const products = [
   {
     name: 'Nike Slim Shirt',
     category: 'Shirts',
-    image: '/images/p1.jpg',
+    image: '/img/products/products_1.jpg',
     price: 120,
     brand: 'Nike',
     countInStock: 10,
@@ -13,7 +13,7 @@ const products = [
   {
     name: 'Adidas Fit Shirt',
     category: 'Shirts',
-    image: '/images/p2.jpg',
+    image: '/img/products/products_2.jpg',
     price: 100,
     brand: 'Adidas',
     countInStock: 20,
@@ -24,7 +24,7 @@ const products = [
   {
     name: 'Lacoste Free Pants',
     category: 'Pants',
-    image: '/images/p3.jpg',
+    image: '/img/products/products_3.jpg',
     price: 220,
     brand: 'Lacoste',
     countInStock: 0,
