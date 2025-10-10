@@ -9,14 +9,22 @@ import authRoutes from "./routes/authRoutes.js";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger/swagger.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
+import helmet from "helmet";
+import compression from "compression";
+import cookieParser from "cookie-parser";
 // Routes
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import healthRoutes from "./routes/healthRoutes.js";
 const app = express();
 
+app.use(healthRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
+app.use(helmet());
+app.use(compression());
+app.use(cookieParser());
 
 app.use("/api/orders", orderRoutes);
 // ---- Middleware cơ bản ----
@@ -69,3 +77,15 @@ mongoose.connect(MONGO_URI)
 
 app.use(notFound);
 app.use(errorHandler);
+
+import rateLimit from "express-rate-limit";
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Khi đăng ký route:
+app.use("/api/auth", authLimiter, authRoutes);
+
