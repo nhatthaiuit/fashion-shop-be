@@ -1,7 +1,7 @@
 const products = [
   {
     name: 'Nike Slim Shirt',
-    category: 'Shirts',
+    category: 'Top',
     image: '/img/products/products_1.jpg',
     price: 120,
     brand: 'Nike',
@@ -12,7 +12,7 @@ const products = [
   },
   {
     name: 'Adidas Fit Shirt',
-    category: 'Shirts',
+    category: 'Top',
     image: '/img/products/products_2.jpg',
     price: 100,
     brand: 'Adidas',
@@ -23,14 +23,26 @@ const products = [
   },
   {
     name: 'Lacoste Free Pants',
-    category: 'Pants',
-    image: '/img/products/products_3.jpg',
+    category: 'Bottom',
+    image: '/img/products/products_12.jpg',
     price: 220,
     brand: 'Lacoste',
     countInStock: 0,
     rating: 4.8,
     numReviews: 17,
     description: 'high quality pants',
+  },
+
+  {
+    name: 'Access Bag',
+    category: 'Accessories',
+    image: '/img/Accessories/product_1.png',
+    price: 220,
+    brand: 'Lacoste',
+    countInStock: 0,
+    rating: 4.8,
+    numReviews: 17,
+    description: 'high quality bag',
   },
 ];
 
