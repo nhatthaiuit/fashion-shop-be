@@ -26,13 +26,21 @@ app.use(express.urlencoded({ extended: true }));
 const allowed = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174")
   .split(",")
   .map(s => s.trim());
+// Cho phép mọi origin trong dev (tạm thời để chạy cho chắc)
 app.use(cors({
-  origin: allowed.includes("*") ? true : allowed,
-  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // bật nếu bạn dùng cookie/token cần gửi kèm
+  origin: true, // phản chiếu Origin header
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Origin','X-Requested-With','Content-Type','Accept','Authorization'],
+  credentials: true,
 }));
 
+// Bắt và trả lời toàn bộ preflight (OPTIONS) theo chuẩn Express 5
+app.options(/.*/, cors({
+  origin: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Origin','X-Requested-With','Content-Type','Accept','Authorization'],
+  credentials: true,
+}));
 /* ----------------------- ROUTES ------------------------- */
 app.get("/", (_req, res) =>
   res.json({ ok: true, time: new Date().toISOString() })
@@ -78,3 +86,6 @@ mongoose.connect(MONGO_URI)
 /* -------------------- ERROR HANDLERS -------------------- */
 app.use(notFound);
 app.use(errorHandler);
+
+
+//ád
