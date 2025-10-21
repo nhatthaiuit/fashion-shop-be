@@ -23,3 +23,15 @@ export function adminOnly(req, res, next) {
   }
   next();
 }
+
+export const isAdmin = (req, res, next) => {
+  try {
+    if (req.user && req.user.role === "admin") {
+      return next();
+    }
+    return res.status(403).json({ message: "Forbidden: Admin access required" });
+  } catch (err) {
+    console.error("isAdmin error:", err);
+    return res.status(500).json({ message: "Server error in isAdmin" });
+  }
+};
