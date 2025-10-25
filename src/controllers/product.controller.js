@@ -1,14 +1,58 @@
+// controllers/product.controller.js
 export const getProducts = asyncHandler(async (req, res) => {
-  const page  = Number(req.query.page)  || 1;
-  const limit = Number(req.query.limit) || 20;
+  const page  = Math.max(Number(req.query.page)  || 1, 1);
+  const limit = Math.max(Number(req.query.limit) || 20, 1);
   const skip  = (page - 1) * limit;
 
-  const total = await Product.countDocuments();
-  const items = await Product.find().skip(skip).limit(limit);
+  // ---- Build filter
+  const filter = {};
 
-  res.setHeader('X-Total-Count', total); // <-- thêm dòng này
+  // Lọc theo category (Top/Bottom/Accessories/...)
+  if (req.query.category) {
+    filter.category = req.query.category;
+  }
+
+  // Tìm kiếm toàn văn (đã có text index name/brand/category)
+  if (req.query.keyword) {
+    filter.$text = { $search: req.query.keyword };
+  }
+
+  // Chỉ lấy hàng còn bán (tuỳ chọn): inStock=1|true
+  // Nguyên tắc: countInStock > 0 (với Top/Bottom: đã = tổng sizes.stock nhờ model)
+  if (String(req.query.inStock).toLowerCase() === '1' ||
+      String(req.query.inStock).toLowerCase() === 'true') {
+    filter.countInStock = { $gt: 0 };
+    filter.status = { $ne: 'discontinued' };
+  }
+
+  // ---- Sort
+  const sortParam = (req.query.sort || '').toLowerCase();
+  const sortMap = {
+    newest:     { createdAt: -1 },
+    price_asc:  { price: 1 },
+    price_desc: { price: -1 },
+    name_asc:   { name: 1 },
+    name_desc:  { name: -1 },
+  };
+  const sort = sortMap[sortParam] || { createdAt: -1 };
+
+  // ---- Query
+  const total = await Product.countDocuments(filter);
+  const items = await Product.find(filter).sort(sort).skip(skip).limit(limit);
+
+  // ---- Headers for FE
+  res.set('Access-Control-Expose-Headers', 'X-Total-Count');
+  res.set('X-Total-Count', String(total));
+
   res.json({
-    meta: { page, limit, total, totalPages: Math.ceil(total/limit) },
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(Math.ceil(total / limit), 1),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1
+    },
     items
   });
 });
