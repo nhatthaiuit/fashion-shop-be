@@ -56,3 +56,22 @@ export const getProducts = asyncHandler(async (req, res) => {
     items
   });
 });
+
+
+export const updateProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const product = await Product.findById(id);
+  if (!product) return res.status(404).json({ message: "Product not found" });
+
+  const body = req.body;
+
+  // ⚙️ Nếu có sizes -> bỏ qua countInStock, để schema tự tính
+  if (Array.isArray(body.sizes) && body.sizes.length) {
+    delete body.countInStock;
+  }
+
+  Object.assign(product, body);
+  await product.save(); // pre('validate') & pre('save') sẽ tự xử lý
+
+  res.json(product);
+});
