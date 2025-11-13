@@ -40,6 +40,8 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Đọc body an toàn
   const body = req.body || {};
   const shipping_address = body.shipping_address || body.address || "";
+  const customer_name    = body.customer_name || body.fullName || body.name || "";
+  const phone            = body.phone || body.phoneNumber || body.shipping_phone || "";
   const rawItems = Array.isArray(body.items) ? body.items : [];
 
   if (!rawItems.length) {
@@ -95,6 +97,8 @@ export const createOrder = asyncHandler(async (req, res) => {
     items: orderItems,
     total_amount: total,
     shipping_address,
+    customer_name,
+    phone,
     status: "pending",
   });
 
@@ -130,27 +134,36 @@ export const myOrders = asyncHandler(async (req, res) => {
  *       200: { description: OK }
  */
 export const getOrders = asyncHandler(async (req, res) => {
-  const page  = Number(req.query.page)  || 1;
-  const limit = Number(req.query.limit) || 20;
+  const page  = Math.max(Number(req.query.page)  || 1, 1);
+  const limit = Math.max(Number(req.query.limit) || 20, 1);
   const skip  = (page - 1) * limit;
 
   const total = await Order.countDocuments();
-  const items = await Order.find()
+  const docs  = await Order.find()
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  res.setHeader("X-Total-Count", total);
+  // map _id -> id cho React-Admin
+  const items = docs.map(o => ({ id: o._id.toString(), ...o }));
+
+  res.set("Access-Control-Expose-Headers", "X-Total-Count");
+  res.set("X-Total-Count", String(total));
+
   res.json({
     meta: {
-      page, limit, total,
-      totalPages: Math.ceil(total / limit),
+      page,
+      limit,
+      total,
+      totalPages: Math.max(Math.ceil(total / limit), 1),
       hasNextPage: page * limit < total,
       hasPrevPage: page > 1,
     },
     items,
   });
 });
+
 
 /**
  * @openapi
@@ -163,10 +176,21 @@ export const getOrders = asyncHandler(async (req, res) => {
  *       404: { description: Not Found }
  */
 export const getOrderById = asyncHandler(async (req, res) => {
-  const doc = await Order.findById(req.params.id);
-  if (!doc) return res.status(404).json({ message: "Order not found" });
-  res.json(doc);
+  const doc = await Order.findById(req.params.id)
+    .populate({
+      path: "items.product_id",
+      select: "name price image", // những field muốn dùng trong admin
+    })
+    .lean();
+
+  if (!doc) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  // map _id -> id cho React-Admin
+  res.json({ id: doc._id.toString(), ...doc });
 });
+
 
 /**
  * @openapi

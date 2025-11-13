@@ -22,6 +22,8 @@ const orderSchema = new Schema(
       required: true,
       validate: [(v) => Array.isArray(v) && v.length > 0, "items must not be empty"]
     },
+    customer_name:    { type: String, default: "" },
+    phone:            { type: String, default: "" },
 
     total_amount:     { type: Number, required: true, min: 0 },
     shipping_address: { type: String, default: "" },
