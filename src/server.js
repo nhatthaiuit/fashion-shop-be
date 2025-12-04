@@ -29,16 +29,16 @@ const allowed = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localh
 // Cho phép mọi origin trong dev (tạm thời để chạy cho chắc)
 app.use(cors({
   origin: true, // phản chiếu Origin header
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Origin','X-Requested-With','Content-Type','Accept','Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true,
 }));
 
 // Bắt và trả lời toàn bộ preflight (OPTIONS) theo chuẩn Express 5
 app.options(/.*/, cors({
   origin: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Origin','X-Requested-With','Content-Type','Accept','Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true,
 }));
 /* ----------------------- ROUTES ------------------------- */
@@ -65,16 +65,26 @@ const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
   .then(() => {
-    const base = (process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, "");
+    const localUrl = `http://localhost:${PORT}`;
+    const deployUrl = process.env.PUBLIC_BASE_URL;
+
     app.listen(PORT, () => {
       console.log("==============================================");
       console.log(`✅ MongoDB connected`);
       console.log(`✅ API listening on port ${PORT}`);
-      console.log(`🔗 Health:        ${base}/`);
-      console.log(`🔗 Swagger Docs:  ${base}/docs`);
-      console.log(`🔗 Products:      ${base}/api/products`);
-      console.log(`   (GET by id):   ${base}/api/products/{id}`);
-      console.log(`🔗 Orders:        ${base}/api/orders`);
+      console.log("==============================================");
+
+      console.log(`🚀 LOCAL:`);
+      console.log(`🔗 Health:        ${localUrl}/`);
+      console.log(`🔗 Swagger Docs:  ${localUrl}/docs`);
+      console.log(`🔗 Products:      ${localUrl}/api/products`);
+      console.log(`🔗 Orders:        ${localUrl}/api/orders`);
+
+      if (deployUrl && deployUrl !== localUrl) {
+        console.log("\n🌍 DEPLOYMENT:");
+        console.log(`🔗 Health:        ${deployUrl}/`);
+        console.log(`🔗 Swagger Docs:  ${deployUrl}/docs`);
+      }
       console.log("==============================================");
     });
   })
@@ -86,6 +96,3 @@ mongoose.connect(MONGO_URI)
 /* -------------------- ERROR HANDLERS -------------------- */
 app.use(notFound);
 app.use(errorHandler);
-
-
-//ád
