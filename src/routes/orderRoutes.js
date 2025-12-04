@@ -11,12 +11,14 @@ import {
 
 const router = Router();
 
+// JSDoc comments are in order.controller.js
 router.post("/", createOrder);
 router.get("/mine", protect, myOrders);
 
-// 👇 Thêm 3 route admin:
+// Admin routes
 router.get("/", protect, isAdmin, getOrders);
 router.get("/:id", protect, isAdmin, getOrderById);
 router.put("/:id/status", protect, isAdmin, updateOrderStatus);
 
 export default router;
+
