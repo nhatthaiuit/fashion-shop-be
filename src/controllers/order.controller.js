@@ -40,8 +40,8 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Đọc body an toàn
   const body = req.body || {};
   const shipping_address = body.shipping_address || body.address || "";
-  const customer_name    = body.customer_name || body.fullName || body.name || "";
-  const phone            = body.phone || body.phoneNumber || body.shipping_phone || "";
+  const customer_name = body.customer_name || body.fullName || body.name || "";
+  const phone = body.phone || body.phoneNumber || body.shipping_phone || "";
   const rawItems = Array.isArray(body.items) ? body.items : [];
 
   if (!rawItems.length) {
@@ -134,12 +134,16 @@ export const myOrders = asyncHandler(async (req, res) => {
  *       200: { description: OK }
  */
 export const getOrders = asyncHandler(async (req, res) => {
-  const page  = Math.max(Number(req.query.page)  || 1, 1);
+  const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.max(Number(req.query.limit) || 20, 1);
-  const skip  = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
   const total = await Order.countDocuments();
-  const docs  = await Order.find()
+  const docs = await Order.find()
+    .populate({
+      path: "items.product_id",
+      select: "name price image", // populate product info for CSV export
+    })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
