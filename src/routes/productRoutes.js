@@ -49,9 +49,9 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     // Pagination
-    const page  = Math.max(parseInt(req.query.page)  || 1, 1);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 12, 1), 100);
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     // Filters
     const { category, brand, q } = req.query;
@@ -60,7 +60,7 @@ router.get("/", async (req, res) => {
 
     const filter = {};
     if (category) filter.category = category;
-    if (brand)    filter.brand    = brand;
+    if (brand) filter.brand = brand;
     if (priceMin != null || priceMax != null) {
       filter.price = {};
       if (priceMin != null) filter.price.$gte = priceMin;
@@ -74,17 +74,17 @@ router.get("/", async (req, res) => {
     // Sorting
     let sort = { createdAt: -1 }; // newest
     const sortKey = req.query.sort;
-    if (sortKey === "price_asc")   sort = { price: 1,  createdAt: -1 };
-    if (sortKey === "price_desc")  sort = { price: -1, createdAt: -1 };
+    if (sortKey === "price_asc") sort = { price: 1, createdAt: -1 };
+    if (sortKey === "price_desc") sort = { price: -1, createdAt: -1 };
     if (sortKey === "rating_desc") sort = { rating: -1, numReviews: -1, createdAt: -1 };
 
     // Query + count
     const [items, total] = await Promise.all([
       q
         ? Product.find(filter, { score: { $meta: "textScore" } })
-            .sort({ score: { $meta: "textScore" }, ...sort })
-            .skip(skip)
-            .limit(limit)
+          .sort({ score: { $meta: "textScore" }, ...sort })
+          .skip(skip)
+          .limit(limit)
         : Product.find(filter).sort(sort).skip(skip).limit(limit),
       Product.countDocuments(filter),
     ]);
@@ -152,12 +152,12 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", protect, adminOnly, async (req, res) => {
   try {
-    const { name, price, image, brand, category, description, countInStock } = req.body;
-    if (!name || price == null || !image || !brand || !category) {
+    const { name, price, image, brand, category, description, countInStock, sizes } = req.body;
+    if (!name || price == null || !image || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const created = await Product.create({
-      name, price, image, brand, category, description, countInStock
+      name, price, image, brand, category, description, countInStock, sizes
     });
     res.status(201).json(created);
   } catch (e) {
@@ -183,8 +183,14 @@ router.post("/", protect, adminOnly, async (req, res) => {
  */
 router.patch("/:id", protect, adminOnly, async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "Product not found" });
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    // Update fields from request body
+    Object.assign(product, req.body);
+
+    // Save will trigger pre-validate and pre-save hooks
+    const updated = await product.save();
     res.json(updated);
   } catch (e) {
     res.status(500).json({ message: e.message });

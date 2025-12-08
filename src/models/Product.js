@@ -1,36 +1,35 @@
 import mongoose from "mongoose";
 
 const sizeSchema = new mongoose.Schema(
-  { label: { type: String, enum: ["XS","S","M","L","XL","XXL"], required: true },
-    stock: { type: Number, min: 0, default: 0 } },
+  {
+    label: { type: String, enum: ["XS", "S", "M", "L", "XL", "XXL"], required: true },
+    stock: { type: Number, min: 0, default: 0 }
+  },
   { _id: false }
 );
 
 const productSchema = new mongoose.Schema({
-  name:  { type: String, required: true, trim: true },
+  name: { type: String, required: true, trim: true },
   category: { type: String, required: true },
   image: { type: String, required: true },
-  images:{ type: [String], default: [] },
+  images: { type: [String], default: [] },
   price: { type: Number, required: true, min: 0 },
-  brand: { type: String, required: true },
 
   // NOTE: với Top/Bottom, field này là *derived* từ sizes
   countInStock: { type: Number, required: true, min: 0, default: 0 },
   sizes: { type: [sizeSchema], default: [] },
 
-  rating: { type: Number, min: 0, max: 5, default: 0 },
-  numReviews: { type: Number, min: 0, default: 0 },
   description: { type: String, default: "" },
 
   status: {
     type: String,
-    enum: ["available","out_of_stock","discontinued"],
+    enum: ["available", "out_of_stock", "discontinued"],
     default: "available"
   }
 }, { timestamps: true });
 
 // helpers
-const NEED_SIZE = (cat) => ["Top","Bottom"].includes(cat);
+const NEED_SIZE = (cat) => ["Top", "Bottom"].includes(cat);
 
 // tổng tồn theo sizes
 productSchema.virtual("sizesTotalStock").get(function () {
@@ -43,8 +42,10 @@ productSchema.pre("validate", function (next) {
     // với Top/Bottom: countInStock *derive* từ sizes
     this.countInStock = this.sizesTotalStock || 0;
   } else {
-    // với danh mục không cần size: dọn sạch sizes
-    if (Array.isArray(this.sizes) && this.sizes.length) this.sizes = [];
+    // với danh mục khác: nếu có sizes thì cũng derive, không thì giữ nguyên
+    if (Array.isArray(this.sizes) && this.sizes.length > 0) {
+      this.countInStock = this.sizesTotalStock || 0;
+    }
   }
   next();
 });
@@ -63,7 +64,7 @@ productSchema.path("countInStock").validate(function (v) {
   return true;
 }, "countInStock must equal sum(sizes.stock) for sized categories.");
 
-productSchema.index({ name: "text", brand: "text", category: "text" });
-productSchema.index({ category: 1, brand: 1, price: 1, createdAt: -1 });
+productSchema.index({ name: "text", category: "text" });
+productSchema.index({ category: 1, price: 1, createdAt: -1 });
 
 export default mongoose.model("Product", productSchema);

@@ -1,8 +1,8 @@
 // controllers/product.controller.js
 export const getProducts = asyncHandler(async (req, res) => {
-  const page  = Math.max(Number(req.query.page)  || 1, 1);
+  const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.max(Number(req.query.limit) || 20, 1);
-  const skip  = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
   // ---- Build filter
   const filter = {};
@@ -12,7 +12,7 @@ export const getProducts = asyncHandler(async (req, res) => {
     filter.category = req.query.category;
   }
 
-  // Tìm kiếm toàn văn (đã có text index name/brand/category)
+  // Tìm kiếm toàn văn (đã có text index name/category)
   if (req.query.keyword) {
     filter.$text = { $search: req.query.keyword };
   }
@@ -20,7 +20,7 @@ export const getProducts = asyncHandler(async (req, res) => {
   // Chỉ lấy hàng còn bán (tuỳ chọn): inStock=1|true
   // Nguyên tắc: countInStock > 0 (với Top/Bottom: đã = tổng sizes.stock nhờ model)
   if (String(req.query.inStock).toLowerCase() === '1' ||
-      String(req.query.inStock).toLowerCase() === 'true') {
+    String(req.query.inStock).toLowerCase() === 'true') {
     filter.countInStock = { $gt: 0 };
     filter.status = { $ne: 'discontinued' };
   }
@@ -28,11 +28,11 @@ export const getProducts = asyncHandler(async (req, res) => {
   // ---- Sort
   const sortParam = (req.query.sort || '').toLowerCase();
   const sortMap = {
-    newest:     { createdAt: -1 },
-    price_asc:  { price: 1 },
+    newest: { createdAt: -1 },
+    price_asc: { price: 1 },
     price_desc: { price: -1 },
-    name_asc:   { name: 1 },
-    name_desc:  { name: -1 },
+    name_asc: { name: 1 },
+    name_desc: { name: -1 },
   };
   const sort = sortMap[sortParam] || { createdAt: -1 };
 
