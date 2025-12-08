@@ -19,6 +19,7 @@ router.get("/mine", protect, myOrders);
 router.get("/", protect, isAdmin, getOrders);
 router.get("/:id", protect, isAdmin, getOrderById);
 router.put("/:id/status", protect, isAdmin, updateOrderStatus);
-
+// React Admin đang gọi cái này: PUT /api/orders/:id
+router.put("/:id", protect, isAdmin, updateOrderStatus);
 export default router;
 
