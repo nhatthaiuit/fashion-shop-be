@@ -14,14 +14,11 @@ const productSchema = new mongoose.Schema({
   image: { type: String, required: true },
   images: { type: [String], default: [] },
   price: { type: Number, required: true, min: 0 },
-  brand: { type: String, default: "No Brand" },
 
   // NOTE: với Top/Bottom, field này là *derived* từ sizes
   countInStock: { type: Number, required: true, min: 0, default: 0 },
   sizes: { type: [sizeSchema], default: [] },
 
-  rating: { type: Number, min: 0, max: 5, default: 0 },
-  numReviews: { type: Number, min: 0, default: 0 },
   description: { type: String, default: "" },
 
   status: {
@@ -67,7 +64,7 @@ productSchema.path("countInStock").validate(function (v) {
   return true;
 }, "countInStock must equal sum(sizes.stock) for sized categories.");
 
-productSchema.index({ name: "text", brand: "text", category: "text" });
-productSchema.index({ category: 1, brand: 1, price: 1, createdAt: -1 });
+productSchema.index({ name: "text", category: "text" });
+productSchema.index({ category: 1, price: 1, createdAt: -1 });
 
 export default mongoose.model("Product", productSchema);
