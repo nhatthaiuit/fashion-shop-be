@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-function signToken(user){
+function signToken(user) {
   return jwt.sign(
     { id: user._id, role: user.role, email: user.email },
     process.env.JWT_SECRET,
@@ -24,14 +24,29 @@ function signToken(user){
  *             type: object
  *             required: [username, email, password]
  *             properties:
- *               username: { type: string }
- *               email:    { type: string, format: email }
- *               password: { type: string }
- *               full_name:{ type: string }
- *               role:     { type: string, enum: [customer, admin] }
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *               full_name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone_number:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [customer, admin]
  *     responses:
- *       201: { description: Created }
- *       409: { description: Username or email exists }
+ *       201:
+ *         description: Created
+ *       400:
+ *         description: Missing required fields
+ *       409:
+ *         description: Username or email exists
  */
 export const register = asyncHandler(async (req, res) => {
   const { username, email, password, full_name, address, phone_number, role } = req.body;
@@ -48,7 +63,7 @@ export const register = asyncHandler(async (req, res) => {
   await user.setPassword(password);
   await user.save();
   const token = signToken(user);
-  res.status(201).json({ token, user: { id:user._id, username, email, role:user.role } });
+  res.status(201).json({ token, user: { id: user._id, username, email, role: user.role } });
 });
 
 /**
@@ -65,11 +80,17 @@ export const register = asyncHandler(async (req, res) => {
  *             type: object
  *             required: [usernameOrEmail, password]
  *             properties:
- *               usernameOrEmail: { type: string }
- *               password:        { type: string }
+ *               usernameOrEmail:
+ *                 type: string
+ *               password:
+ *                 type: string
  *     responses:
- *       200: { description: OK }
- *       401: { description: Invalid credentials }
+ *       200:
+ *         description: OK
+ *       400:
+ *         description: Missing username or password
+ *       401:
+ *         description: Invalid credentials
  */
 export const login = asyncHandler(async (req, res) => {
   const { usernameOrEmail, password } = req.body;
@@ -85,5 +106,5 @@ export const login = asyncHandler(async (req, res) => {
     throw new Error("Invalid credentials");
   }
   const token = signToken(user);
-  res.json({ token, user: { id:user._id, username:user.username, email:user.email, role:user.role } });
+  res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role } });
 });
