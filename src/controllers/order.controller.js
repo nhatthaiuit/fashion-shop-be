@@ -96,7 +96,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     if (Number(prod.count_in_stock || 0) < qty) {
       res.status(400);
-      throw new Error(`Số lượng bạn mua vượt quá tồn kho ${prod.name}`);
+      throw new Error(`Quantity exceeds available stock for ${prod.name}`);
     }
 
     const unit_price = Number(prod.price || 0);
