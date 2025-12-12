@@ -28,6 +28,23 @@ const orderSchema = new Schema(
     total_amount: { type: Number, required: true, min: 0 },
     shipping_address: { type: String, default: "" },
 
+
+
+    payment_method: {
+      type: String,
+      enum: ["cod", "paypal"],
+      default: "cod",
+      required: true
+    },
+    payment_result: {
+      id: { type: String },
+      status: { type: String },
+      update_time: { type: String },
+      email_address: { type: String }
+    },
+    is_paid: { type: Boolean, required: true, default: false },
+    paid_at: { type: Date },
+
     status: {
       type: String,
       enum: ["pending", "paid", "shipped", "completed", "cancelled"],

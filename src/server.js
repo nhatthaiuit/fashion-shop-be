@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger/swagger.js";
@@ -53,6 +54,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payment", paymentRoutes);
 
 // Static files (nếu cần)
 const __filename = fileURLToPath(import.meta.url);
@@ -60,7 +62,7 @@ const __dirname = path.dirname(__filename);
 app.use("/images", express.static(path.join(__dirname, "../images")));
 
 /* --------------------- START SERVER --------------------- */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
