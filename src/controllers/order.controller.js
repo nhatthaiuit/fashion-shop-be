@@ -16,24 +16,44 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  *         application/json:
  *           schema:
  *             type: object
- *             required: [items]
+ *             required: [items, customer_name, phone, shipping_address]
  *             properties:
- *               shipping_address:
- *                 type: string
+ *               customer_name: { type: string }
+ *               phone: { type: string }
+ *               shipping_address: { type: string }
  *               items:
  *                 type: array
- *                 description: Accepts product_id|product|_id|id and quantity|qty
  *                 items:
  *                   type: object
+ *                   required: [product_id, quantity]
  *                   properties:
  *                     product_id: { type: string }
- *                     product:    { type: string }
- *                     _id:        { type: string }
- *                     id:         { type: string }
- *                     quantity:   { type: integer, minimum: 1 }
- *                     qty:        { type: integer, minimum: 1 }
+ *                     quantity: { type: integer, minimum: 1 }
  *     responses:
- *       201: { description: Created }
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id: { type: string }
+ *                 customer_name: { type: string }
+ *                 phone: { type: string }
+ *                 shipping_address: { type: string }
+ *                 total_amount: { type: number }
+ *                 status: { type: string }
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       product_id: { type: string }
+ *                       quantity: { type: integer }
+ *                       unit_price: { type: number }
+ *                       _id: { type: string }
+ *                 created_at: { type: string, format: date-time }
+ *                 updated_at: { type: string, format: date-time }
  *       400: { description: Bad request }
  */
 export const createOrder = asyncHandler(async (req, res) => {
@@ -74,7 +94,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       throw new Error(`Product not found: ${pid}`);
     }
 
-    if (Number(prod.countInStock || 0) < qty) {
+    if (Number(prod.count_in_stock || 0) < qty) {
       res.status(400);
       throw new Error(`Số lượng bạn mua vượt quá tồn kho ${prod.name}`);
     }
@@ -88,7 +108,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     total += unit_price * qty;
 
     // Trừ tồn kho
-    prod.countInStock = Number(prod.countInStock || 0) - qty;
+    prod.count_in_stock = Number(prod.count_in_stock || 0) - qty;
     await prod.save();
   }
 
@@ -113,10 +133,23 @@ export const createOrder = asyncHandler(async (req, res) => {
  *     tags: [Orders]
  *     security: [ { bearerAuth: [] } ]
  *     responses:
- *       200: { description: OK }
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id: { type: string }
+ *                   total_amount: { type: number }
+ *                   status: { type: string }
+ *                   items: { type: array }
+ *                   created_at: { type: string, format: date-time }
  */
 export const myOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user_id: req.user.id }).sort({ createdAt: -1 });
+  const orders = await Order.find({ user_id: req.user.id }).sort({ created_at: -1 });
   res.json(orders);
 });
 //-------------------------------------------------------------
@@ -144,7 +177,7 @@ export const getOrders = asyncHandler(async (req, res) => {
       path: "items.product_id",
       select: "name price image", // populate product info for CSV export
     })
-    .sort({ createdAt: -1 })
+    .sort({ created_at: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
@@ -175,6 +208,11 @@ export const getOrders = asyncHandler(async (req, res) => {
  *   get:
  *     summary: Get single order by ID (admin)
  *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
  *     responses:
  *       200: { description: OK }
  *       404: { description: Not Found }
@@ -202,6 +240,11 @@ export const getOrderById = asyncHandler(async (req, res) => {
  *   put:
  *     summary: Update order status (admin)
  *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
  *     requestBody:
  *       required: true
  *       content:

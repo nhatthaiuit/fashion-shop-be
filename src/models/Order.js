@@ -6,7 +6,7 @@ const { Schema } = mongoose;
 const orderItemSchema = new Schema(
   {
     product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-    quantity:   { type: Number, required: true, min: 1 },
+    quantity: { type: Number, required: true, min: 1 },
     unit_price: { type: Number, required: true, min: 0 }
   },
   { _id: false }
@@ -22,10 +22,10 @@ const orderSchema = new Schema(
       required: true,
       validate: [(v) => Array.isArray(v) && v.length > 0, "items must not be empty"]
     },
-    customer_name:    { type: String, default: "" },
-    phone:            { type: String, default: "" },
+    customer_name: { type: String, default: "" },
+    phone: { type: String, default: "" },
 
-    total_amount:     { type: Number, required: true, min: 0 },
+    total_amount: { type: Number, required: true, min: 0 },
     shipping_address: { type: String, default: "" },
 
     status: {
@@ -34,7 +34,9 @@ const orderSchema = new Schema(
       default: "pending"
     }
   },
-  { timestamps: true }
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  }
 );
 
 export default mongoose.model("Order", orderSchema);

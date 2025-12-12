@@ -18,23 +18,23 @@ export const getProducts = asyncHandler(async (req, res) => {
   }
 
   // Chỉ lấy hàng còn bán (tuỳ chọn): inStock=1|true
-  // Nguyên tắc: countInStock > 0 (với Top/Bottom: đã = tổng sizes.stock nhờ model)
+  // Nguyên tắc: count_in_stock > 0 (với Top/Bottom: đã = tổng sizes.stock nhờ model)
   if (String(req.query.inStock).toLowerCase() === '1' ||
     String(req.query.inStock).toLowerCase() === 'true') {
-    filter.countInStock = { $gt: 0 };
+    filter.count_in_stock = { $gt: 0 };
     filter.status = { $ne: 'discontinued' };
   }
 
   // ---- Sort
   const sortParam = (req.query.sort || '').toLowerCase();
   const sortMap = {
-    newest: { createdAt: -1 },
+    newest: { created_at: -1 },
     price_asc: { price: 1 },
     price_desc: { price: -1 },
-    name_asc: { name: 1 },
-    name_desc: { name: -1 },
+    name_asc: { product_name: 1 },
+    name_desc: { product_name: -1 },
   };
-  const sort = sortMap[sortParam] || { createdAt: -1 };
+  const sort = sortMap[sortParam] || { created_at: -1 };
 
   // ---- Query
   const total = await Product.countDocuments(filter);
@@ -65,9 +65,14 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   const body = req.body;
 
-  // ⚙️ Nếu có sizes -> bỏ qua countInStock, để schema tự tính
+  // ⚙️ Nếu có sizes -> bỏ qua count_in_stock, để schema tự tính
   if (Array.isArray(body.sizes) && body.sizes.length) {
-    delete body.countInStock;
+    delete body.count_in_stock;
+  }
+
+  // Chặn đổi product_name thành rỗng nếu có gửi lên
+  if (body.product_name !== undefined && !body.product_name) {
+    delete body.product_name;
   }
 
   Object.assign(product, body);

@@ -3,12 +3,14 @@ import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true, trim: true },
+    user_name: { type: String, required: true, unique: true, trim: true },
     password_hash: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     role: { type: String, enum: ["customer", "admin"], default: "customer" },
   },
-  { timestamps: true }
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  }
 );
 
 userSchema.methods.setPassword = async function (plain) {

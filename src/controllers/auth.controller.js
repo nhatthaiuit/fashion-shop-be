@@ -43,27 +43,41 @@ function signToken(user) {
  *     responses:
  *       201:
  *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token: { type: string }
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string }
+ *                     username: { type: string }
+ *                     email: { type: string }
+ *                     role: { type: string }
+ *                     created_at: { type: string, format: date-time }
  *       400:
  *         description: Missing required fields
  *       409:
  *         description: Username or email exists
  */
 export const register = asyncHandler(async (req, res) => {
-  const { username, email, password, full_name, address, phone_number, role } = req.body;
-  if (!username || !email || !password) {
+  const { user_name, email, password, full_name, address, phone_number, role } = req.body;
+  if (!user_name || !email || !password) {
     res.status(400);
-    throw new Error("username, email, password are required");
+    throw new Error("user_name, email, password are required");
   }
-  const exists = await User.findOne({ $or: [{ username }, { email }] });
+  const exists = await User.findOne({ $or: [{ user_name }, { email }] });
   if (exists) {
     res.status(409);
     throw new Error("Username or email already exists");
   }
-  const user = new User({ username, email, full_name, address, phone_number, role });
+  const user = new User({ user_name, email, full_name, address, phone_number, role });
   await user.setPassword(password);
   await user.save();
   const token = signToken(user);
-  res.status(201).json({ token, user: { id: user._id, username, email, role: user.role } });
+  res.status(201).json({ token, user: { id: user._id, user_name, email, role: user.role, created_at: user.created_at } });
 });
 
 /**
@@ -87,6 +101,19 @@ export const register = asyncHandler(async (req, res) => {
  *     responses:
  *       200:
  *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token: { type: string }
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string }
+ *                     username: { type: string }
+ *                     email: { type: string }
+ *                     role: { type: string }
  *       400:
  *         description: Missing username or password
  *       401:
@@ -99,12 +126,12 @@ export const login = asyncHandler(async (req, res) => {
     throw new Error("usernameOrEmail and password are required");
   }
   const user = await User.findOne({
-    $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    $or: [{ user_name: usernameOrEmail }, { email: usernameOrEmail }],
   });
   if (!user || !(await user.comparePassword(password))) {
     res.status(401);
     throw new Error("Invalid credentials");
   }
   const token = signToken(user);
-  res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role } });
+  res.json({ token, user: { id: user._id, user_name: user.user_name, email: user.email, role: user.role } });
 });

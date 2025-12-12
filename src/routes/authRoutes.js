@@ -15,9 +15,9 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [username, email, password]
+ *             required: [user_name, email, password]
  *             properties:
- *               username:
+ *               user_name:
  *                 type: string
  *                 example: johndoe
  *               email:
@@ -59,7 +59,7 @@ const router = Router();
  *                     id:
  *                       type: string
  *                       example: 507f1f77bcf86cd799439011
- *                     username:
+ *                     user_name:
  *                       type: string
  *                       example: johndoe
  *                     email:
@@ -114,7 +114,7 @@ router.post("/register", register);
  *                     id:
  *                       type: string
  *                       example: 507f1f77bcf86cd799439011
- *                     username:
+ *                     user_name:
  *                       type: string
  *                       example: johndoe
  *                     email:
