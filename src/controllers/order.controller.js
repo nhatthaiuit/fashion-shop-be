@@ -171,8 +171,16 @@ export const getOrders = asyncHandler(async (req, res) => {
   const limit = Math.max(Number(req.query.limit) || 20, 1);
   const skip = (page - 1) * limit;
 
-  const total = await Order.countDocuments();
-  const docs = await Order.find()
+  const filter = {};
+  if (req.query.status) {
+    filter.status = req.query.status;
+  }
+  if (req.query.customer_name) {
+    filter.customer_name = { $regex: req.query.customer_name, $options: "i" };
+  }
+
+  const total = await Order.countDocuments(filter);
+  const docs = await Order.find(filter)
     .populate({
       path: "items.product_id",
       select: "name price image", // populate product info for CSV export
