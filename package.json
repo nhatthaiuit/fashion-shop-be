@@ -2,7 +2,7 @@
   "name": "fashion-shop-be",
   "version": "1.0.0",
   "type": "module",
-  "description": "Backend API cho dự án Fashion Shop (Node.js + Express + MongoDB).",
+  "description": "Backend API cho d\u1ef1 \u00e1n Fashion Shop (Node.js + Express + MongoDB).",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/server.js",
@@ -32,13 +32,13 @@
     "mongoose": "^8.19.0",
     "morgan": "^1.10.1",
     "multer": "^2.2.0",
-    "multer-storage-cloudinary": "^4.0.0"
+    "multer-storage-cloudinary": "^4.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "nodemon": "^3.1.10",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "nodemon": "^3.1.10"
   },
   "directories": {
     "doc": "docs"
