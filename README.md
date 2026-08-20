@@ -77,12 +77,15 @@ For detailed system architecture, Database ERD (Entity Relationship Diagram), AP
 
 ```
 .
+├── docs/            # Swagger documentation and API specifications
 ├── src/
-│   ├── config/      # Database connection configurations
-│   ├── controllers/ # Request handlers (Auth, Products, Orders, etc.)
-│   ├── middleware/  # Express middlewares (Auth, Error handling)
-│   ├── models/      # Mongoose Schema Definitions
-│   ├── routes/      # Express API routes definitions
-│   └── server.js    # Application entry point & Swagger Setup
-└── docs/            # Postman collections and API documentation
+│   ├── config/      # Database (MongoDB) & Cloudinary configurations
+│   ├── controllers/ # Business logic & handlers (Auth, Product, Order)
+│   ├── middleware/  # JWT Authentication, Upload, and Error handling
+│   ├── models/      # Mongoose Schemas (User, Product, Order)
+│   ├── routes/      # Express API route endpoints
+│   ├── swagger/     # Swagger JSDoc and UI configurations
+│   ├── utils/       # Utility functions & helper scripts
+│   ├── app.js       # Express app setup and middleware configuration
+│   └── server.js    # HTTP Server entry point & DB connection
 ```
