@@ -113,6 +113,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     await prod.save();
   }
 
+  const payment_method = req.body.payment_method || "cod";
+  const is_paid = payment_method === "bank_transfer" || req.body.is_paid === true;
+  const status = is_paid ? "processing" : (req.body.status || "pending");
+
   const order = await Order.create({
     user_id: req.body.user_id || req.user?.id || null, // không đăng nhập vẫn OK
     items: orderItems,
@@ -120,7 +124,11 @@ export const createOrder = asyncHandler(async (req, res) => {
     shipping_address,
     customer_name,
     phone,
-    status: "pending",
+    payment_method,
+    is_paid,
+    paid_at: is_paid ? new Date() : null,
+    payment_result: req.body.payment_result || undefined,
+    status,
   });
 
   res.status(201).json(order);

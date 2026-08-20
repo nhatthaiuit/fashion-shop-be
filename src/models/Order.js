@@ -32,7 +32,7 @@ const orderSchema = new Schema(
 
     payment_method: {
       type: String,
-      enum: ["cod", "paypal"],
+      enum: ["cod", "bank_transfer", "paypal"],
       default: "cod",
       required: true
     },
@@ -47,7 +47,7 @@ const orderSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "paid", "shipped", "completed", "cancelled"],
+      enum: ["pending", "processing", "shipped", "completed", "cancelled"],
       default: "pending"
     }
   },
