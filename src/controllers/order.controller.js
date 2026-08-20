@@ -113,7 +113,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   const order = await Order.create({
-    user_id: req.user?.id || null, // không đăng nhập vẫn OK
+    user_id: req.body.user_id || req.user?.id || null, // không đăng nhập vẫn OK
     items: orderItems,
     total_amount: total,
     shipping_address,
@@ -149,7 +149,7 @@ export const createOrder = asyncHandler(async (req, res) => {
  *                   created_at: { type: string, format: date-time }
  */
 export const myOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user_id: req.user.id }).sort({ created_at: -1 });
+  const orders = await Order.find({ user_id: req.user.id }).populate("items.product_id", "name product_name image price original_price").sort({ created_at: -1 });
   res.json(orders);
 });
 //-------------------------------------------------------------
@@ -280,4 +280,9 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   );
   if (!doc) return res.status(404).json({ message: "Order not found" });
   res.json(doc);
+});
+
+export const getMyOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({ user_id: req.user._id }).populate("items.product_id", "name product_name image price original_price").sort({ created_at: -1 });
+  res.json(orders);
 });

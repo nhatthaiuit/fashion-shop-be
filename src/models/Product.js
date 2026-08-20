@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema({
   image: { type: String, required: true },
   images: { type: [String], default: [] },
   price: { type: Number, required: true, min: 0 },
+  original_price: { type: Number, min: 0 },
 
   // NOTE: với Top/Bottom, field này là *derived* từ sizes
   count_in_stock: { type: Number, required: true, min: 0, default: 0 },

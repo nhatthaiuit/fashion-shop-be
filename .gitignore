@@ -1,28 +1,11 @@
 # --- Node & deps
 node_modules/
-# System Files
+
+# --- System Files
 .DS_Store
 Thumbs.db
 
-# Build Artifacts
-dist/
-build/
-
-# Logs and Junk
-*.log
-*.txt
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-pnpm-debug.log*
-
-# --- Env secrets
-.env
-.env.*
-!.env.example        # giữ lại file mẫu để người khác biết cần biến gì
-
-# --- Build artifacts (nếu bạn build ra dist)
+# --- Build Artifacts
 dist/
 build/
 
@@ -30,18 +13,22 @@ build/
 logs/
 *.log
 *.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Environment variables
+.env
+.env.*
+!.env.example
 
 # --- Coverage / test outputs
 coverage/
+*.tmp
+*.py
+test_*.js
 
-# --- OS junk
-.DS_Store
-Thumbs.db
-
-# --- IDE/editor
+# --- IDE / Editor
 .vscode/
 .idea/
-
-**/node_modules/
-
-

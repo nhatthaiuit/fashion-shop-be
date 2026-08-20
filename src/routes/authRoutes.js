@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { register, login } from "../controllers/auth.controller.js";
+import { register, login, getProfile, updateProfile, toggleWishlist } from "../controllers/auth.controller.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -131,3 +132,6 @@ router.post("/register", register);
 router.post("/login", login);
 
 export default router;
+
+router.route("/profile").get(protect, getProfile).put(protect, updateProfile);
+router.route("/wishlist/:id").post(protect, toggleWishlist);

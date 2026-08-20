@@ -7,6 +7,10 @@ const userSchema = new mongoose.Schema(
     password_hash: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     role: { type: String, enum: ["customer", "admin"], default: "customer" },
+    full_name: { type: String, default: "" },
+    phone_number: { type: String, default: "" },
+    address: { type: String, default: "" },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
