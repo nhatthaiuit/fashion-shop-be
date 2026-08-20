@@ -15,7 +15,7 @@ For detailed system architecture, Database ERD (Entity Relationship Diagram), AP
 - **Swagger API Docs**: **[https://fashion-shop-be-one.vercel.app/docs](https://fashion-shop-be-one.vercel.app/docs)**
 
 ### 🔐 Test Accounts (For Recruiters/Testers)
-- **Admin**: `admin@fashionshop.com` / `123456`
+- **Admin**: `newadmin` / `NewAdmin@2024`
 - **Customer**: Feel free to register a new account via the `/api/auth/register` API.
 
 ## 🚀 Features
