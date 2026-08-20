@@ -1,67 +1,82 @@
-// src/controllers/product.controller.js
-import Product from "../models/Product.js";
+// controllers/product.controller.js
+export const getProducts = asyncHandler(async (req, res) => {
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.max(Number(req.query.limit) || 20, 1);
+  const skip = (page - 1) * limit;
 
-/**
- * GET /api/products
- * Query:
- *  - q (text search), category, sale=true, minPrice, maxPrice
- *  - sort=createdAt:desc | price:asc | price:desc ...
- *  - page, limit
- */
-export async function listProducts(req, res, next) {
-  try {
-    const {
-      q,
-      category,
-      sale,
-      minPrice,
-      maxPrice,
-      sort = "createdAt:desc",
-      page = 1,
-      limit = 12,
-    } = req.query;
+  // ---- Build filter
+  const filter = {};
 
-    const cond = {};
-    if (category) cond.category = String(category).toUpperCase();
-    if (sale === "true") {
-      cond.$or = [{ salePrice: { $ne: null } }, { discount: { $gt: 0 } }];
-    }
-    if (minPrice || maxPrice) {
-      cond.price = {};
-      if (minPrice) cond.price.$gte = Number(minPrice);
-      if (maxPrice) cond.price.$lte = Number(maxPrice);
-    }
-    if (q) cond.$text = { $search: q };
-
-    const [field, dir] = String(sort).split(":");
-    const sortObj = { [field]: dir === "asc" ? 1 : -1 };
-
-    const p = Math.max(1, Number(page));
-    const l = Math.max(1, Number(limit));
-    const skip = (p - 1) * l;
-
-    const [items, total] = await Promise.all([
-      Product.find(cond).sort(sortObj).skip(skip).limit(l).lean(),
-      Product.countDocuments(cond),
-    ]);
-
-    return res.json({
-      success: true,
-      data: items,
-      pageInfo: { page: p, limit: l, total, pages: Math.max(1, Math.ceil(total / l)) },
-    });
-  } catch (err) {
-    next(err);
+  // Lọc theo category (Top/Bottom/Accessories/...)
+  if (req.query.category) {
+    filter.category = req.query.category;
   }
-}
 
-/** GET /api/products/:id */
-export async function getProduct(req, res, next) {
-  try {
-    const doc = await Product.findById(req.params.id).lean();
-    if (!doc) return res.status(404).json({ success: false, error: "NOT_FOUND" });
-    return res.json({ success: true, data: doc });
-  } catch (err) {
-    next(err);
+  // Tìm kiếm toàn văn (đã có text index name/category)
+  if (req.query.keyword) {
+    filter.$text = { $search: req.query.keyword };
   }
-}
+
+  // Chỉ lấy hàng còn bán (tuỳ chọn): inStock=1|true
+  // Nguyên tắc: count_in_stock > 0 (với Top/Bottom: đã = tổng sizes.stock nhờ model)
+  if (String(req.query.inStock).toLowerCase() === '1' ||
+    String(req.query.inStock).toLowerCase() === 'true') {
+    filter.count_in_stock = { $gt: 0 };
+    filter.status = { $ne: 'discontinued' };
+  }
+
+  // ---- Sort
+  const sortParam = (req.query.sort || '').toLowerCase();
+  const sortMap = {
+    newest: { created_at: -1 },
+    price_asc: { price: 1 },
+    price_desc: { price: -1 },
+    name_asc: { product_name: 1 },
+    name_desc: { product_name: -1 },
+  };
+  const sort = sortMap[sortParam] || { created_at: -1 };
+
+  // ---- Query
+  const total = await Product.countDocuments(filter);
+  const items = await Product.find(filter).sort(sort).skip(skip).limit(limit);
+
+  // ---- Headers for FE
+  res.set('Access-Control-Expose-Headers', 'X-Total-Count');
+  res.set('X-Total-Count', String(total));
+
+  res.json({
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(Math.ceil(total / limit), 1),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1
+    },
+    items
+  });
+});
+
+
+export const updateProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const product = await Product.findById(id);
+  if (!product) return res.status(404).json({ message: "Product not found" });
+
+  const body = req.body;
+
+  // ⚙️ Nếu có sizes -> bỏ qua count_in_stock, để schema tự tính
+  if (Array.isArray(body.sizes) && body.sizes.length) {
+    delete body.count_in_stock;
+  }
+
+  // Chặn đổi product_name thành rỗng nếu có gửi lên
+  if (body.product_name !== undefined && !body.product_name) {
+    delete body.product_name;
+  }
+
+  Object.assign(product, body);
+  await product.save(); // pre('validate') & pre('save') sẽ tự xử lý
+
+  res.json(product);
+});

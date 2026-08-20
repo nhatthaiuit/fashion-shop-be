@@ -1,107 +1,128 @@
-# 🛒 Fashion Shop - Backend
+# 🛍️ Fashion Shop E-Commerce - Backend API
 
-Backend API cho dự án Fashion Shop (Node.js + Express + MongoDB).
+![Node.js](https://img.shields.io/badge/Node.js-v18+-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-5.x-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
+![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%203.0-%2385EA2D?style=for-the-badge&logo=swagger&logoColor=black)
+![JWT](https://img.shields.io/badge/JWT-Secure%20Auth-black?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
----
-
-## 🚀 Yêu cầu hệ thống
-
-- [Git] 2.50.1.windows.1
-- [Node.js] v22.19.0
-- [npm] 10.9.3
-- [MongoDB Atlas] 
-- [Postman] để test API
+A production-ready Node.js/Express RESTful API powering the Fashion Shop E-Commerce platform. Engineered with a layered MVC architecture, robust role-based access control (RBAC), automated stock calculation, and Cloudinary media management.
 
 ---
 
-## ⚙️ Cách chạy (lần đầu)
+## 🌐 Live API & Interactive Documentation
 
-1. Clone repo  
-   
+- **Base API URL**: [https://fashion-shop-backend.onrender.com](https://fashion-shop-backend.onrender.com)
+- **Interactive Swagger UI**: [https://fashion-shop-backend.onrender.com/docs](https://fashion-shop-backend.onrender.com/docs)
+- **Frontend Web Application**: [https://fashion-shop-frontend-uit.vercel.app](https://fashion-shop-frontend-uit.vercel.app)
+
+### 🔐 Demo Credentials (For Testing & Recruitment)
+
+| Role | Username / Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `newadmin` *(or `admin@fashionshop.com`)* | `NewAdmin@2024` *(or `123456`)* |
+| **Customer** | Register freely via `/api/auth/register` | Custom |
+
+---
+
+## 🚀 Key Features & Highlights
+
+- **Role-Based Access Control (RBAC)**: Secure authentication with JSON Web Tokens (JWT) and Bcrypt password hashing, separating customer and administrator capabilities.
+- **Automated Stock Derivation**: Built-in Mongoose pre-save middleware that dynamically computes total `count_in_stock` from nested size variants (`S`, `M`, `L`, `XL`).
+- **Cloudinary Media Upload**: Direct multipart file upload integration with Cloudinary for product catalog images.
+- **Advanced Querying & Pagination**: Standardized pagination (`page`, `limit`, `skip`), sorting, and multi-field search (e.g. order status, customer name).
+- **Data Export & Reporting**: Endpoints formatted for seamless CSV/Excel data export in the React-Admin dashboard.
+- **Security Best Practices**: Integrated `helmet` headers, CORS whitelisting, MongoDB query sanitization, and structured global error handling.
+
+---
+
+## 🛠 Tech Stack & Dependencies
+
+- **Core Runtime**: Node.js (ES Modules)
+- **Framework**: Express.js (v5)
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: `jsonwebtoken`, `bcrypt`
+- **File Storage**: `multer`, `multer-storage-cloudinary`, `cloudinary`
+- **API Documentation**: `swagger-jsdoc`, `swagger-ui-express`
+- **Security & Utilities**: `helmet`, `cors`, `morgan`, `dotenv`
+
+---
+
+## 🗄️ Database Schema & Data Models
+
+- **`User`**: Manages customer profiles, administrative accounts, role levels (`customer` | `admin`), and encrypted credentials.
+- **`Product`**: Stores product details, pricing, discount rates, categorization, image URLs, and dynamic `sizes` stock arrays.
+- **`Order`**: Tracks customer orders, line items, populated product snapshots, total amounts, shipping addresses, and lifecycle statuses (`pending`, `processing`, `shipped`, `completed`, `cancelled`).
+- **`Category`**: Organizes products into intuitive taxonomy hierarchies.
+
+---
+
+## 💻 Local Installation & Setup
+
+1. **Clone the repository**:
+   ```bash
    git clone https://github.com/nhatthaiuit/fashion-shop-be.git
    cd fashion-shop-be
+   ```
 
-2. Cài dependency
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-    npm install
+3. **Configure Environment Variables**:
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in your local credentials:
+   ```env
+   PORT=5000
+   MONGO_URI=mongodb://127.0.0.1:27017/fashionshop
+   PUBLIC_BASE_URL=http://localhost:5000
+   CORS_ORIGIN=http://localhost:5173
+   JWT_SECRET=your_jwt_secret_key
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
 
-3. Tạo file .env từ mẫu
+4. **Seed Initial Data (Optional)**:
+   ```bash
+   node src/seeder.js
+   ```
 
-    cp .env.example .env   # Mac/Linux
-    copy .env.example .env # Windows
+5. **Start the Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Server will start at `http://localhost:5000` with Swagger docs at `http://localhost:5000/docs`.
 
-4. Sửa .env, điền giá trị thật cho MONGO_URI
+---
 
-5. Chạy server
+## 📁 Project Structure
 
-    npm run dev   # chế độ dev
-    # hoặc
-    npm start     # chế độ production
+```
+fashion-shop-be/
+├── src/
+│   ├── config/          # MongoDB & Cloudinary service configurations
+│   ├── controllers/     # Request controllers (Auth, Products, Orders, Upload)
+│   ├── middleware/      # Auth verification (protect, isAdmin), error handlers
+│   ├── models/          # Mongoose schemas (User, Product, Order, Category)
+│   ├── routes/          # Express route declarations
+│   ├── swagger/         # OpenAPI/Swagger schema definitions
+│   ├── utils/           # Helper functions & async handlers
+│   ├── seeder.js        # Database initial seeder script
+│   ├── app.js           # Express app instance setup
+│   └── server.js        # Server bootstrap & port listener
+├── docs/                # Architecture diagrams & API collections
+├── .env.example         # Template environment variables
+└── package.json
+```
 
+---
 
-## ✅ Kiểm tra server (Vào Postman)
- 
-    import 2 file trong thư mục docs: 
-        fashion-shop-local.postman_environment
-        fashion-shop-postman-collection
-    
-    set enviroment: fashion shop local
+## 📄 License & Author
 
-    Health check:
-    GET http://localhost:5000/ → trả về { "message": "Fashion Shop API is running" }
-
-    Lấy danh sách sản phẩm:
-    GET http://localhost:5000/api/products → trả về danh sách sản phẩm
-
-    Nạp dữ liệu mẫu:
-    POST http://localhost:5000/api/products/seed  → "inserted": 3
-
-## Live URLs
-- Web UI: https://fashion-shop-frontend-peach.vercel.app
-- API base: https://fashion-shop-backend.onrender.com/
-- API Docs (Swagger): https://fashion-shop-backend.onrender.com/docs
-
-# Quy trình phát triển dự án như sau:
-
-1. Trên máy local
-
-Sau khi đã thêm/sửa code xong → kiểm tra chạy local:
-
-    npm run dev   # FE
-    npm run dev   # BE
-
-Nếu ok → commit vào repo tương ứng:
-
-    git add .
-    git commit -m "feat(ui): add Navbar, Home, Products, ProductDetail pages"
-    git push origin main
-
-2. Trên GitHub
-
-Vì đã kết nối FE repo với Vercel và BE repo với Render,
-mỗi lần push lên branch đang deploy (thường là main),
-Vercel/Render sẽ tự động build và deploy lại.
-
-Sau 1–2 phút, refresh link Vercel/Render → sẽ thấy thay đổi ngay.
-
-3. Một số lưu ý
-
-FE (Vercel):
-
-    Chạy npm run build thành công thì mới deploy được.
-
-    Nếu đổi branch deploy, nhớ chọn lại trong Settings của Vercel.
-
-BE (Render):
-
-    Khi push code mới, Render sẽ tự động restart service.
-
-    Nếu BE có thay đổi .env, phải vào Dashboard Render → Environment → Update → Deploy lại.
-
-Cache:
-
-    Đôi khi trình duyệt vẫn giữ CSS/JS cũ → bấm Ctrl + Shift + R (hard refresh).
-
-    Nếu vẫn chưa thấy, vào dashboard Vercel/Render xem log build có lỗi không.
-
-👉 Nói ngắn gọn: commit + push → chờ build → refresh link → thấy ngay thay đổi.
+Developed by **Nhat Thai** for academic and recruitment portfolio showcase.  
+Licensed under the [ISC License](LICENSE).

@@ -5,68 +5,90 @@ import cors from "cors";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
+
 import authRoutes from "./routes/authRoutes.js";
-import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./swagger/swagger.js";
-import { notFound, errorHandler } from "./middleware/errorHandler.js";
-import helmet from "helmet";
-import compression from "compression";
-import cookieParser from "cookie-parser";
-// Routes
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-import healthRoutes from "./routes/healthRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger/swagger.js";
+
+import { notFound, errorHandler } from "./middleware/errorHandler.js";
+
 const app = express();
 
-app.use(healthRoutes);
+/* ---------- MIDDLEWARE PHẢI ĐỨNG TRƯỚC ROUTES ---------- */
+// Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/api/auth", authRoutes);
-app.use(helmet());
-app.use(compression());
-app.use(cookieParser());
 
-app.use("/api/orders", orderRoutes);
-// ---- Middleware cơ bản ----
-app.use(express.json());
-
-// CORS
-const allowed = (process.env.CORS_ORIGIN || "*").split(",").map(s => s.trim());
+// CORS (đặt trước mọi routes)
+const allowed = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174")
+  .split(",")
+  .map(s => s.trim());
+// Cho phép mọi origin trong dev (tạm thời để chạy cho chắc)
 app.use(cors({
-  origin: allowed.includes("*") ? true : allowed,
+  origin: true, // phản chiếu Origin header
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true,
 }));
 
-// Health
-app.get("/", (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+// Bắt và trả lời toàn bộ preflight (OPTIONS) theo chuẩn Express 5
+app.options(/.*/, cors({
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  credentials: true,
+}));
+/* ----------------------- ROUTES ------------------------- */
+app.get("/", (_req, res) =>
+  res.json({ ok: true, time: new Date().toISOString() })
+);
 
-// ---- Swagger /docs ----
-// Không hard-code localhost; khi deploy hãy set PUBLIC_BASE_URL = https://<your-be-domain>
-
+// Swagger
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Routes
-app.use('/api/products', productRoutes);
+// API
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/upload", uploadRoutes);
 
-// Static images (optional)
+// Static files (nếu cần)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use("/images", express.static(path.join(__dirname, "../images")));
 
-const PORT = process.env.PORT || 5000;
+/* --------------------- START SERVER --------------------- */
+const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
   .then(() => {
-    const base = (process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, "");
+    const localUrl = `http://localhost:${PORT}`;
+    const deployUrl = process.env.PUBLIC_BASE_URL;
+
     app.listen(PORT, () => {
       console.log("==============================================");
       console.log(`✅ MongoDB connected`);
       console.log(`✅ API listening on port ${PORT}`);
-      console.log(`🔗 Health:        ${base}/`);
-      console.log(`🔗 Swagger Docs:  ${base}/docs`);
-      console.log(`🔗 Products:      ${base}/api/products`);
-      console.log(`   (GET by id):   ${base}/api/products/{id}`);
+      console.log("==============================================");
+
+      console.log(`🚀 LOCAL:`);
+      console.log(`🔗 Health:        ${localUrl}/`);
+      console.log(`🔗 Swagger Docs:  ${localUrl}/docs`);
+      console.log(`🔗 Products:      ${localUrl}/api/products`);
+      console.log(`🔗 Orders:        ${localUrl}/api/orders`);
+
+      if (deployUrl && deployUrl !== localUrl) {
+        console.log("\n🌍 DEPLOYMENT:");
+        console.log(`🔗 Health:        ${deployUrl}/`);
+        console.log(`🔗 Swagger Docs:  ${deployUrl}/docs`);
+      }
       console.log("==============================================");
     });
   })
@@ -75,17 +97,6 @@ mongoose.connect(MONGO_URI)
     process.exit(1);
   });
 
+/* -------------------- ERROR HANDLERS -------------------- */
 app.use(notFound);
 app.use(errorHandler);
-
-import rateLimit from "express-rate-limit";
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Khi đăng ký route:
-app.use("/api/auth", authLimiter, authRoutes);
-

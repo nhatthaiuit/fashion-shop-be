@@ -1,5 +1,7 @@
+// src/controllers/order.controller.js
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 
@@ -7,17 +9,18 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  * @openapi
  * /api/orders:
  *   post:
- *     summary: Create an order (require login)
+ *     summary: Create an order (no login required)
  *     tags: [Orders]
- *     security: [ { bearerAuth: [] } ]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [items]
+ *             required: [items, customer_name, phone, shipping_address]
  *             properties:
+ *               customer_name: { type: string }
+ *               phone: { type: string }
  *               shipping_address: { type: string }
  *               items:
  *                 type: array
@@ -26,39 +29,97 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  *                   required: [product_id, quantity]
  *                   properties:
  *                     product_id: { type: string }
- *                     quantity:   { type: integer, minimum: 1 }
+ *                     quantity: { type: integer, minimum: 1 }
  *     responses:
- *       201: { description: Created }
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id: { type: string }
+ *                 customer_name: { type: string }
+ *                 phone: { type: string }
+ *                 shipping_address: { type: string }
+ *                 total_amount: { type: number }
+ *                 status: { type: string }
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       product_id: { type: string }
+ *                       quantity: { type: integer }
+ *                       unit_price: { type: number }
+ *                       _id: { type: string }
+ *                 created_at: { type: string, format: date-time }
+ *                 updated_at: { type: string, format: date-time }
  *       400: { description: Bad request }
  */
 export const createOrder = asyncHandler(async (req, res) => {
-  const { items, shipping_address } = req.body;
-  if (!Array.isArray(items) || items.length === 0) {
-    res.status(400); throw new Error("items is required");
+  // Đọc body an toàn
+  const body = req.body || {};
+  const shipping_address = body.shipping_address || body.address || "";
+  const customer_name = body.customer_name || body.fullName || body.name || "";
+  const phone = body.phone || body.phoneNumber || body.shipping_phone || "";
+  const rawItems = Array.isArray(body.items) ? body.items : [];
+
+  if (!rawItems.length) {
+    res.status(400);
+    throw new Error("items is required");
   }
-  const enriched = [];
+
+  const orderItems = [];
   let total = 0;
 
-  for (const it of items) {
-    const prod = await Product.findById(it.product_id);
-    if (!prod) { res.status(400); throw new Error("Invalid product: " + it.product_id); }
-    if (prod.countInStock < it.quantity) {
-      res.status(400); throw new Error(`Insufficient stock for ${prod.name}`);
-    }
-    const unit_price = prod.price;
-    enriched.push({ product_id: prod._id, quantity: it.quantity, unit_price });
-    total += unit_price * it.quantity;
+  for (const it of rawItems) {
+    // Chấp nhận nhiều tên trường id
+    const pid =
+      it?.product_id ??
+      it?.product ??
+      it?._id ??
+      it?.id ??
+      null;
 
-    // trừ tồn
-    prod.countInStock -= it.quantity;
+    const qty = Math.max(1, Number(it?.quantity ?? it?.qty ?? 1));
+
+    if (!pid || !mongoose.Types.ObjectId.isValid(String(pid))) {
+      res.status(400);
+      throw new Error(`Invalid product: ${pid ?? "undefined"}`);
+    }
+
+    const prod = await Product.findById(pid);
+    if (!prod) {
+      res.status(400);
+      throw new Error(`Product not found: ${pid}`);
+    }
+
+    if (Number(prod.count_in_stock || 0) < qty) {
+      res.status(400);
+      throw new Error(`Quantity exceeds available stock for ${prod.name}`);
+    }
+
+    const unit_price = Number(prod.price || 0);
+    orderItems.push({
+      product_id: prod._id,      // lưu lại id thật trong order
+      quantity: qty,
+      unit_price,
+    });
+    total += unit_price * qty;
+
+    // Trừ tồn kho
+    prod.count_in_stock = Number(prod.count_in_stock || 0) - qty;
     await prod.save();
   }
 
   const order = await Order.create({
-    user_id: req.user.id,
-    items: enriched,
+    user_id: req.body.user_id || req.user?.id || null, // không đăng nhập vẫn OK
+    items: orderItems,
     total_amount: total,
     shipping_address,
+    customer_name,
+    phone,
     status: "pending",
   });
 
@@ -73,9 +134,156 @@ export const createOrder = asyncHandler(async (req, res) => {
  *     tags: [Orders]
  *     security: [ { bearerAuth: [] } ]
  *     responses:
- *       200: { description: OK }
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id: { type: string }
+ *                   total_amount: { type: number }
+ *                   status: { type: string }
+ *                   items: { type: array }
+ *                   created_at: { type: string, format: date-time }
  */
 export const myOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user_id: req.user.id }).sort({ createdAt: -1 });
+  const orders = await Order.find({ user_id: req.user.id }).populate("items.product_id", "name product_name image price original_price").sort({ created_at: -1 });
+  res.json(orders);
+});
+//-------------------------------------------------------------
+// ADMIN FUNCTIONS
+//-------------------------------------------------------------
+
+/**
+ * @openapi
+ * /api/orders:
+ *   get:
+ *     summary: Get all orders (admin only)
+ *     tags: [Orders]
+ *     security: [ { bearerAuth: [] } ]
+ *     responses:
+ *       200: { description: OK }
+ */
+export const getOrders = asyncHandler(async (req, res) => {
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.max(Number(req.query.limit) || 20, 1);
+  const skip = (page - 1) * limit;
+
+  const filter = {};
+  if (req.query.status) {
+    filter.status = req.query.status;
+  }
+  if (req.query.customer_name) {
+    filter.customer_name = { $regex: req.query.customer_name, $options: "i" };
+  }
+
+  const total = await Order.countDocuments(filter);
+  const docs = await Order.find(filter)
+    .populate({
+      path: "items.product_id",
+      select: "name price image", // populate product info for CSV export
+    })
+    .sort({ created_at: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  // map _id -> id cho React-Admin
+  const items = docs.map(o => ({ id: o._id.toString(), ...o }));
+
+  res.set("Access-Control-Expose-Headers", "X-Total-Count");
+  res.set("X-Total-Count", String(total));
+
+  res.json({
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(Math.ceil(total / limit), 1),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+    },
+    items,
+  });
+});
+
+
+/**
+ * @openapi
+ * /api/orders/{id}:
+ *   get:
+ *     summary: Get single order by ID (admin)
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: OK }
+ *       404: { description: Not Found }
+ */
+export const getOrderById = asyncHandler(async (req, res) => {
+  const doc = await Order.findById(req.params.id)
+    .populate({
+      path: "items.product_id",
+      select: "name price image", // những field muốn dùng trong admin
+    })
+    .lean();
+
+  if (!doc) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  // map _id -> id cho React-Admin
+  res.json({ id: doc._id.toString(), ...doc });
+});
+
+
+/**
+ * @openapi
+ * /api/orders/{id}/status:
+ *   put:
+ *     summary: Update order status (admin)
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, processing, shipped, completed, cancelled]
+ *     responses:
+ *       200: { description: Updated }
+ *       400: { description: Invalid status }
+ */
+export const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const allowed = ["pending", "processing", "shipped", "completed", "cancelled"];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+  const doc = await Order.findByIdAndUpdate(
+    req.params.id,
+    { status },
+    { new: true }
+  );
+  if (!doc) return res.status(404).json({ message: "Order not found" });
+  res.json(doc);
+});
+
+export const getMyOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({ user_id: req.user._id }).populate("items.product_id", "name product_name image price original_price").sort({ created_at: -1 });
   res.json(orders);
 });

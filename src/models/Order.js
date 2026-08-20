@@ -1,24 +1,59 @@
+// src/models/Order.js
 import mongoose from "mongoose";
 
-const orderItemSchema = new mongoose.Schema(
+const { Schema } = mongoose;
+
+const orderItemSchema = new Schema(
   {
-    product_id: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-    quantity:   { type: Number, required: true, min: 1 },
-    unit_price: { type: Number, required: true, min: 0 },
+    product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    unit_price: { type: Number, required: true, min: 0 }
   },
   { _id: false }
 );
 
-const orderSchema = new mongoose.Schema(
+const orderSchema = new Schema(
   {
-    user_id:          { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    order_date:       { type: Date, default: Date.now },
-    total_amount:     { type: Number, required: true, min: 0 },
-    status:           { type: String, enum: ["pending","paid","shipped","delivered","cancelled"], default: "pending" },
-    shipping_address: { type: String },
-    items:            { type: [orderItemSchema], required: true },
+    // ✅ Cho phép khách không đăng nhập: user_id optional
+    user_id: { type: Schema.Types.ObjectId, ref: "User", required: false, default: null },
+
+    items: {
+      type: [orderItemSchema],
+      required: true,
+      validate: [(v) => Array.isArray(v) && v.length > 0, "items must not be empty"]
+    },
+    customer_name: { type: String, default: "" },
+    phone: { type: String, default: "" },
+
+    total_amount: { type: Number, required: true, min: 0 },
+    shipping_address: { type: String, default: "" },
+
+
+
+    payment_method: {
+      type: String,
+      enum: ["cod", "paypal"],
+      default: "cod",
+      required: true
+    },
+    payment_result: {
+      id: { type: String },
+      status: { type: String },
+      update_time: { type: String },
+      email_address: { type: String }
+    },
+    is_paid: { type: Boolean, required: true, default: false },
+    paid_at: { type: Date },
+
+    status: {
+      type: String,
+      enum: ["pending", "paid", "shipped", "completed", "cancelled"],
+      default: "pending"
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  }
 );
 
 export default mongoose.model("Order", orderSchema);
