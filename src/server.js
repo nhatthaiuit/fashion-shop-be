@@ -74,11 +74,32 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// Swagger Documentation
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: ".swagger-ui .topbar { display: none }",
-  customSiteTitle: "Fashion Shop API Docs"
-}));
+// Swagger Documentation (with CDN assets for Vercel serverless compatibility)
+const SWAGGER_CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css";
+const SWAGGER_CUSTOM_CSS = `
+  .swagger-ui .topbar { display: none }
+  .swagger-ui .info { margin: 20px 0; }
+  .swagger-ui .scheme-container { background: #fafafa; padding: 15px 0; }
+`;
+
+const swaggerUiOptions = {
+  customCss: SWAGGER_CUSTOM_CSS,
+  customSiteTitle: "Fashion Shop API Docs",
+  customCssUrl: SWAGGER_CSS_URL,
+  customJs: [
+    "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js"
+  ]
+};
+
+// JSON spec endpoints
+app.get(["/docs.json", "/api/docs.json", "/api-docs.json"], (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.json(swaggerSpec);
+});
+
+// Swagger UI on /docs and /api-docs
+app.use(["/docs", "/api-docs"], swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 /* -------------------- ERROR HANDLERS -------------------- */
 app.use(notFound);
