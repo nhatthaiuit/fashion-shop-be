@@ -68,16 +68,31 @@ export const register = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("user_name, email, password are required");
   }
-  const exists = await User.findOne({ $or: [{ user_name }, { email }] });
+  const cleanUsername = String(user_name).trim();
+  const cleanEmail = String(email).trim().toLowerCase();
+
+  const exists = await User.findOne({
+    $or: [
+      { user_name: cleanUsername },
+      { email: cleanEmail }
+    ]
+  });
   if (exists) {
     res.status(409);
     throw new Error("Username or email already exists");
   }
-  const user = new User({ user_name, email, full_name, address, phone_number, role });
+  const user = new User({
+    user_name: cleanUsername,
+    email: cleanEmail,
+    full_name: (full_name || "").trim(),
+    address: (address || "").trim(),
+    phone_number: (phone_number || "").trim(),
+    role: role || "customer"
+  });
   await user.setPassword(password);
   await user.save();
   const token = signToken(user);
-  res.status(201).json({ token, user: { id: user._id, user_name, email, role: user.role, created_at: user.created_at, wishlist: [] } });
+  res.status(201).json({ token, user: { id: user._id, user_name: user.user_name, email: user.email, role: user.role, created_at: user.created_at, wishlist: [] } });
 });
 
 /**
@@ -125,8 +140,14 @@ export const login = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("usernameOrEmail and password are required");
   }
+  const cleanInput = String(usernameOrEmail).trim();
+  const cleanEmail = cleanInput.toLowerCase();
+
   const user = await User.findOne({
-    $or: [{ user_name: usernameOrEmail }, { email: usernameOrEmail }],
+    $or: [
+      { email: cleanEmail },
+      { user_name: cleanInput }
+    ],
   });
   if (!user || !(await user.comparePassword(password))) {
     res.status(401);
