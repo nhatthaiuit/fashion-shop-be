@@ -1,6 +1,11 @@
 // be/src/swagger/swagger.js (ESM)
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const options = {
   definition: {
@@ -10,8 +15,11 @@ const options = {
       version: "1.0.0",
       description: "API documentation for Fashion Shop e-commerce platform"
     },
-    // Không hard-code localhost. Khi deploy, đặt PUBLIC_BASE_URL trong ENV.
-    servers: [{ url: process.env.PUBLIC_BASE_URL || "/" }],
+    servers: [
+      { url: process.env.PUBLIC_BASE_URL || "/" },
+      { url: "https://fashion-shop-be-one.vercel.app" },
+      { url: "http://localhost:4000" }
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -23,8 +31,13 @@ const options = {
       }
     }
   },
-  // Quét comment JSDoc trong routes và controllers
-  apis: ["./src/routes/*.js", "./src/controllers/*.js"],
+  // Quét comment JSDoc với cả absolute path và relative path
+  apis: [
+    path.join(__dirname, "../routes/*.js"),
+    path.join(__dirname, "../controllers/*.js"),
+    "./src/routes/*.js",
+    "./src/controllers/*.js"
+  ],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);
