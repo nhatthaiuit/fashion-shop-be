@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const sizeSchema = new mongoose.Schema(
   {
-    label: { type: String, enum: ["XS", "S", "M", "L", "XL", "XXL"], required: true },
+    label: { type: String, enum: ["XS", "S", "M", "L", "XL", "XXL", "Freesize", "OneSize"], required: true },
     stock: { type: Number, min: 0, default: 0 }
   },
   { _id: false }
@@ -39,16 +39,14 @@ productSchema.virtual("sizesTotalStock").get(function () {
   return (this.sizes || []).reduce((s, x) => s + (x.stock || 0), 0);
 });
 
-// 1) Trước validate: ép invariant
+// 1) Trước validate: ép invariant và kiểm tra Freesize
 productSchema.pre("validate", function (next) {
-  if (NEED_SIZE(this.category)) {
-    // với Top/Bottom: count_in_stock *derive* từ sizes
-    this.count_in_stock = this.sizesTotalStock || 0;
-  } else {
-    // với danh mục khác: nếu có sizes thì cũng derive, không thì giữ nguyên
-    if (Array.isArray(this.sizes) && this.sizes.length > 0) {
-      this.count_in_stock = this.sizesTotalStock || 0;
+  if (Array.isArray(this.sizes) && this.sizes.length > 0) {
+    const hasFreesize = this.sizes.some(s => s.label === "Freesize" || s.label === "OneSize");
+    if (hasFreesize && this.sizes.length > 1) {
+      return next(new Error("Cannot add other sizes when Freesize is selected."));
     }
+    this.count_in_stock = this.sizesTotalStock || 0;
   }
   next();
 });
@@ -59,13 +57,13 @@ productSchema.pre("save", function (next) {
   next();
 });
 
-// (tuỳ chọn) Validator để chặn payload cố tình đặt count_in_stock sai cho Top/Bottom
+// Validator để đảm bảo count_in_stock khớp với sizesTotalStock khi có sizes
 productSchema.path("count_in_stock").validate(function (v) {
-  if (NEED_SIZE(this.category)) {
-    return v === this.sizesTotalStock; // bắt buộc đúng invariant
+  if (Array.isArray(this.sizes) && this.sizes.length > 0) {
+    return v === this.sizesTotalStock;
   }
   return true;
-}, "count_in_stock must equal sum(sizes.stock) for sized categories.");
+}, "count_in_stock must equal sum(sizes.stock) when sizes are defined.");
 
 productSchema.index({ product_name: "text", category: "text" });
 productSchema.index({ category: 1, price: 1, createdAt: -1 });
