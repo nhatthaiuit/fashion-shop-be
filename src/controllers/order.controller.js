@@ -188,13 +188,20 @@ export const getOrders = asyncHandler(async (req, res) => {
     filter.customer_name = { $regex: req.query.customer_name, $options: "i" };
   }
 
+  let sortObj = { updated_at: -1, created_at: -1 };
+  if (req.query.sort) {
+    const sortField = req.query.sort === "id" ? "_id" : req.query.sort;
+    const sortOrder = String(req.query.order).toUpperCase() === "ASC" ? 1 : -1;
+    sortObj = { [sortField]: sortOrder };
+  }
+
   const total = await Order.countDocuments(filter);
   const docs = await Order.find(filter)
     .populate({
       path: "items.product_id",
-      select: "name price image", // populate product info for CSV export
+      select: "name product_name price image", // populate product info for CSV export
     })
-    .sort({ created_at: -1 })
+    .sort(sortObj)
     .skip(skip)
     .limit(limit)
     .lean();
@@ -284,11 +291,14 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   }
   const doc = await Order.findByIdAndUpdate(
     req.params.id,
-    { status },
+    { 
+      status,
+      updated_at: new Date()
+    },
     { new: true }
-  );
+  ).lean();
   if (!doc) return res.status(404).json({ message: "Order not found" });
-  res.json(doc);
+  res.json({ id: doc._id.toString(), ...doc });
 });
 
 export const getMyOrders = asyncHandler(async (req, res) => {
