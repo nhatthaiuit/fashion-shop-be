@@ -92,12 +92,23 @@ router.get("/", async (req, res) => {
       filter.$text = { $search: q };
     }
 
-    // Sorting
-    let sort = { created_at: -1 }; // newest
+    // Sorting: default to recently updated / created first
+    let sort = { updated_at: -1, created_at: -1 };
     const sortKey = req.query.sort;
-    if (sortKey === "price_asc") sort = { price: 1, created_at: -1 };
-    if (sortKey === "price_desc") sort = { price: -1, created_at: -1 };
-    if (sortKey === "rating_desc") sort = { rating: -1, numReviews: -1, created_at: -1 };
+    const sortOrder = (req.query.order || "DESC").toUpperCase() === "ASC" ? 1 : -1;
+
+    if (sortKey) {
+      if (sortKey === "price_asc") sort = { price: 1, updated_at: -1 };
+      else if (sortKey === "price_desc") sort = { price: -1, updated_at: -1 };
+      else if (sortKey === "rating_desc") sort = { rating: -1, numReviews: -1, updated_at: -1 };
+      else if (sortKey === "name_asc") sort = { product_name: 1, updated_at: -1 };
+      else if (sortKey === "name_desc") sort = { product_name: -1, updated_at: -1 };
+      else if (sortKey === "newest") sort = { created_at: -1, updated_at: -1 };
+      else {
+        const fieldName = sortKey === "id" ? "_id" : sortKey;
+        sort = { [fieldName]: sortOrder, updated_at: -1 };
+      }
+    }
 
     // Query + count
     const [items, total] = await Promise.all([
@@ -255,6 +266,7 @@ router.put("/:id", protect, adminOnly, async (req, res) => {
 
     // Update fields
     Object.assign(product, req.body);
+    product.updated_at = new Date();
 
     // Save triggers hooks (re-calc stock, status)
     const updated = await product.save();
