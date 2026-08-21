@@ -74,7 +74,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// Swagger Documentation (with CDN assets for Vercel serverless compatibility)
+// Swagger Documentation (with CDN assets & Favicon for full Notion/Vercel compatibility)
+const SWAGGER_FAVICON_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/favicon-32x32.png";
 const SWAGGER_CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css";
 const SWAGGER_CUSTOM_CSS = `
   .swagger-ui .topbar { display: none }
@@ -85,12 +86,18 @@ const SWAGGER_CUSTOM_CSS = `
 const swaggerUiOptions = {
   customCss: SWAGGER_CUSTOM_CSS,
   customSiteTitle: "Fashion Shop API Docs",
+  customfavIcon: SWAGGER_FAVICON_URL,
   customCssUrl: SWAGGER_CSS_URL,
   customJs: [
     "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js"
   ]
 };
+
+// Handle Favicon for Notion crawlers & browsers
+app.get(["/favicon.ico", "/docs/favicon-32x32.png", "/docs/favicon-16x16.png", "/api-docs/favicon-32x32.png"], (_req, res) => {
+  res.redirect(SWAGGER_FAVICON_URL);
+});
 
 // JSON spec endpoints
 app.get(["/docs.json", "/api/docs.json", "/api-docs.json"], (_req, res) => {
