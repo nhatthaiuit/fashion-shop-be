@@ -96,7 +96,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     if (Number(prod.count_in_stock || 0) < qty) {
       res.status(400);
-      throw new Error(`Quantity exceeds available stock for ${prod.name}`);
+      throw new Error(`Quantity exceeds available stock for ${prod.product_name || prod.name || "this product"}`);
     }
 
     const unit_price = Number(prod.price || 0);
@@ -244,7 +244,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
   const doc = await Order.findById(req.params.id)
     .populate({
       path: "items.product_id",
-      select: "name price image", // những field muốn dùng trong admin
+      select: "name product_name price original_price image", // những field muốn dùng trong admin
     })
     .lean();
 

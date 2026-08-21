@@ -199,12 +199,12 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", protect, adminOnly, async (req, res) => {
   try {
-    const { product_name, price, image, category, description, count_in_stock, sizes } = req.body;
+    const { product_name, price, original_price, image, category, description, count_in_stock, sizes } = req.body;
     if (!product_name || price == null || !image || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const created = await Product.create({
-      product_name, price, image, category, description, count_in_stock, sizes
+      product_name, price, original_price, image, category, description, count_in_stock, sizes
     });
     res.status(201).json(created);
   } catch (e) {
