@@ -25,11 +25,6 @@ For detailed system architecture, Database ERD (Entity Relationship Diagram), AP
 - **CSV Data Export**: API endpoints and structural support for seamless CSV export of orders and products.
 - **JWT Authentication**: Role-based access control (Admin, Customer).
 
-
-## 📸 Screenshots
-
-*(Screenshots will be updated here soon)*
-
 ## 🛠 Tech Stack
 
 - **Runtime**: Node.js
